@@ -1,7 +1,7 @@
 <?php
 /**
  * Класс для доступа к методам вебсервиса платежной системы www.moneta.ru
- * через SOAP
+ * через JSON
  *
  * PHP version 5
  *
@@ -11,7 +11,7 @@ namespace Moneta;
 
 use Moneta\MonetaWebServiceConnector;
 
-class MonetaSdkSoapConnector extends MonetaWebServiceConnector
+class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 {
 
 	/**
@@ -23,7 +23,7 @@ class MonetaSdkSoapConnector extends MonetaWebServiceConnector
 
 	function __construct()
 	{
-		echo "__construct MonetaSdkSoapConnector<br/>";
+		echo "__construct MonetaSdkJsonConnector<br/>";
 	}
 
 
