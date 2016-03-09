@@ -87,7 +87,7 @@ class MonetaSdk extends MonetaSdkMethods
         $signature = null;
         $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
         if ($monetaAccountCode && $monetaAccountCode != '') {
-            $signature = md5( $this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $this->getSettingValue('monetasdk_account_code') );
+            $signature = md5( $this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $monetaAccountCode );
         }
 
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
@@ -151,6 +151,21 @@ class MonetaSdk extends MonetaSdkMethods
                         break;
 
                     case 'MonetaSendCallBack':
+                        $signature = null;
+                        $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
+                        if ($monetaAccountCode && $monetaAccountCode != '') {
+                            $signature = md5( $this->getRequestedValue('MNT_ID') . $this->getRequestedValue('MNT_TRANSACTION_ID') . $this->getRequestedValue('MNT_OPERATION_ID') . $this->getRequestedValue('MNT_AMOUNT') . $this->getRequestedValue('MNT_CURRENCY_CODE') . $this->getRequestedValue('MNT_TEST_MODE') . $monetaAccountCode );
+                        }
+
+                        if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
+                            $orderId = $this->getRequestedValue('MNT_TRANSACTION_ID');
+                            $amount = $this->getRequestedValue('MNT_AMOUNT');
+                            $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess');
+                            die('SUCCESS');
+                        }
+                        else {
+                            die('FAIL');
+                        }
 
                         break;
                 }
