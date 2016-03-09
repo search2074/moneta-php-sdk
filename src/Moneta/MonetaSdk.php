@@ -39,6 +39,8 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
+        $amount = number_format($amount, 2, '.', '');
+
         if (!$paymentSystem && isset($_COOKIE['mnt_data']) && $_COOKIE['mnt_data']) {
             $cookieMntSerializedData = $_COOKIE['mnt_data'];
             $cookieMntData = @unserialize($cookieMntSerializedData);
@@ -83,7 +85,10 @@ class MonetaSdk extends MonetaSdkMethods
         }
 
         $signature = null;
-        // $signature = md5($mnt_id . $order_id . $amount . $mnt_currency_code . $mnt_test_mode . $mnt_dataintegrity_code);
+        $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
+        if ($monetaAccountCode && $monetaAccountCode != '') {
+            $signature = md5( $this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $this->getSettingValue('monetasdk_account_code') );
+        }
 
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         $varData = $this->addAdditionalData($additionalFields);
@@ -101,7 +106,7 @@ class MonetaSdk extends MonetaSdkMethods
             "additionalData" => $additionalData, "testMode" => $this->getSettingValue('monetasdk_test_mode'), "signature" => $signature,
             "successUrl" => $this->getSettingValue('monetasdk_success_url'), "failUrl" => $this->getSettingValue('monetasdk_fail_url'),
             "accountId" => $this->getSettingValue('monetasdk_account_id'), "isRegular" => $isRegular ? '1' : null,
-            "autoSubmit" => $autoSubmit ? '1' : null, "operationId" => $transactionId);
+            "autoSubmit" => $autoSubmit ? '1' : null, "operationId" => $transactionId, "paymentSystemParams" => $paymentSystemParams);
 
         $this->rendered = MonetaSdkUtils::requireView($viewName, $data);
         $this->result = $data;
