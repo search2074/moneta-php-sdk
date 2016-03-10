@@ -12,11 +12,15 @@ class MonetaSdkMethods
 
     const EXCEPTION_MONETA                  = "merchantAPI error: ";
 
-    public $dataProcessingActionExecuted;
+    public $settings;
 
-    public $result;
+    private $monetaConnectionType;
 
-    public $rendered;
+    public $monetaService;
+
+    public $data;
+
+    public $render;
 
     public $error;
 
@@ -26,11 +30,9 @@ class MonetaSdkMethods
 
     public $errorMessageHumanConverted;
 
-	public $settings;
+    public $events;
 
-	public $monetaService;
-
-	private $monetaConnectionType;
+    public $calledMethods;
 
 
     /**
@@ -49,8 +51,8 @@ class MonetaSdkMethods
 
         try {
             $result = call_user_func_array(array($this->monetaService, $function), $args);
-            $this->result = json_decode(json_encode($result), true);
-            $this->rendered = $this->renderView($function, $this->result);
+            $this->data = json_decode(json_encode($result), true);
+            $this->render = MonetaSdkUtils::requireView($function, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
         }
         catch (\Exception $e) {
             $this->parseException($e);
@@ -94,8 +96,8 @@ class MonetaSdkMethods
      */
     public function cleanResultData()
     {
-        $this->result                       = null;
-        $this->rendered                     = null;
+        $this->data                         = null;
+        $this->render                       = null;
         $this->error                        = false;
         $this->errorCode                    = null;
         $this->errorMessage                 = null;
@@ -144,12 +146,13 @@ class MonetaSdkMethods
             }
 
             if ($paymentSystem == 'post' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaindex',   $additionalData['post_code']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaaddress', $additionalData['post_address']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussianame',    $additionalData['post_sender_name']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaindex',   $additionalData['additionalParameters_mailofrussiaSenderIndex']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaregion',  $additionalData['additionalParameters_mailofrussiaSenderRegion']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaaddress', $additionalData['additionalParameters_mailofrussiaSenderAddress']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussianame',    $additionalData['additionalParameters_mailofrussiaSenderName']));
             }
             else if ($paymentSystem == 'euroset' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['euroset_phone']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['additionalParameters_rapidaPhone']));
             }
 
             $invoiceRequest->operationInfo = $operationInfo;
@@ -172,10 +175,10 @@ class MonetaSdkMethods
 
         switch ($paymentSystem) {
             case 'post':
-                $result = array('post_code', 'post_address', 'post_sender_name');
+                $result = array('additionalParameters_mailofrussiaSenderIndex', 'additionalParameters_mailofrussiaSenderRegion', 'additionalParameters_mailofrussiaSenderAddress', 'additionalParameters_mailofrussiaSenderName');
                 break;
             case 'euroset':
-                $result = array('euroset_phone');
+                $result = array('additionalParameters_rapidaPhone');
                 break;
         }
 
@@ -208,7 +211,6 @@ class MonetaSdkMethods
     public function addAdditionalData($vars, $source = null)
     {
         $result = array();
-
         foreach ($vars AS $var) {
             $value = null;
             if ((!$source || strtolower($source) == 'post') && isset($_POST[$var])) {
@@ -250,13 +252,21 @@ class MonetaSdkMethods
     }
 
     /**
+     * @return bool|string
+     */
+    public function renderError()
+    {
+        $viewName = 'ErrorMessage';
+        $data = array("error" => $this->error, "errorCode" => $this->errorCode, "errorMessage" => $this->errorMessage, "errorMessageHumanConverted" => $this->errorMessageHumanConverted);
+        return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
+    }
+
+    /**
      * @param $vars
      * @return bool
      */
     private function isFieldsSet($vars, $source = null)
     {
-        // все перечисленные поля есть в get или post
-        // (или в указанном источнике)
         $result = true;
         foreach ($vars AS $var) {
             if (strtolower($source) == 'post' && !isset($_POST[$var])) {
@@ -279,8 +289,7 @@ class MonetaSdkMethods
      */
     private function isFieldsUnset($vars, $source = null)
     {
-        // ни одного из перечисленных полей нет ни в get ни в пост
-        // (или в указанном источнике)
+        // no any field is in request of defined source type
         $result = true;
         foreach ($vars AS $var) {
             if ((!$source || strtolower($source) == 'post') && isset($_POST[$var])) {

@@ -6,21 +6,23 @@ use Moneta;
 
 class MonetaSdk extends MonetaSdkMethods
 {
-
 	function __construct()
 	{
+        $this->events = array();
+        $this->calledMethods = array();
 		$this->settings = MonetaSdkUtils::getAllSettings();
 	}
-
 
     // TODO: пусть сохраняет алиас выбранного способа в куку.  Аргумент - типы систем для выбора.
     public function showChoosePaymentSystemForm($paySystemTypes = array())
     {
-
+        $this->calledMethods[] = __FUNCTION__;
 
         $viewName = 'ChoosePaymentSystemForm';
         // return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
     }
+
+    // TODO: толстоватые мотоды, надо часть вынести в класс MonetaSdkMethods
 
     /**
      * Create Assistant payment form
@@ -35,6 +37,17 @@ class MonetaSdk extends MonetaSdkMethods
      */
     public function showPaymentFrom($orderId, $amount, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST', $currency = 'RUB')
     {
+        $this->calledMethods[] = __FUNCTION__;
+
+        // pre Execute
+        if (!in_array('processInputData', $this->calledMethods)) {
+            $this->processInputData('ForwardPaymentForm');
+            if (isset($this->data['event'])) {
+                return $this->getCurrentMethodResult();
+            }
+        }
+
+        // Execute
         $viewName = 'PaymentFrom';
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
@@ -95,7 +108,8 @@ class MonetaSdk extends MonetaSdkMethods
         $postData = array();
         foreach ($varData AS $var) {
             if (isset($var['var'])) {
-                $var['name'] = $this->getSettingValue('additional_fld_' . $var['var']);
+                $var['name'] = $this->getSettingValue($var['var']);
+                $var['var'] = str_replace('_', '.', $var['var']);
             }
 
             $postData[] = $var;
@@ -108,8 +122,8 @@ class MonetaSdk extends MonetaSdkMethods
             "accountId" => $this->getSettingValue('monetasdk_account_id'), "isRegular" => $isRegular ? '1' : null,
             "autoSubmit" => $autoSubmit ? '1' : null, "operationId" => $transactionId, "paymentSystemParams" => $paymentSystemParams);
 
-        $this->rendered = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
-        $this->result = $data;
+        $this->render = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
+        $this->data = $data;
 
         return $this->getCurrentMethodResult();
     }
@@ -117,14 +131,16 @@ class MonetaSdk extends MonetaSdkMethods
     /**
      * Switch and execute an action
      */
-    public function processInputData()
+    public function processInputData($definedEventType = null)
     {
+        $this->calledMethods[] = __FUNCTION__;
+
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
-        $actionExecuted = false;
         $eventType = $this->detectEventTypeFromVars();
-        if ($eventType) {
+
+        if ($eventType && (!$definedEventType || $definedEventType == $eventType)) {
             // handle event
             $isEventHandled = MonetaSdkUtils::handleEvent($eventType, $this->getSettingValue('monetasdk_event_files_path'));
 
@@ -170,16 +186,14 @@ class MonetaSdk extends MonetaSdkMethods
                         break;
                 }
 
+                $this->events[] = $eventType;
             }
 
-            $actionExecuted = true;
-            if (!$this->result) {
-                $this->result = array("event" => $eventType);
-            }
+            $this->data = array("event" => $eventType);
+
         }
 
-        $this->dataProcessingActionExecuted = $actionExecuted;
-        return $actionExecuted;
+        return $this->getCurrentMethodResult();
     }
 
     /**
@@ -192,12 +206,17 @@ class MonetaSdk extends MonetaSdkMethods
      */
 	public function __call($function, $args)
 	{
+        $this->calledMethods[] = __FUNCTION__;
+
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
         if (strpos($function, 'moneta') === 0) {
             $function = str_replace('moneta', '', $function);
         }
         $this->executeSdkRequest($function, $args);
+
+
+
         return $this->getCurrentMethodResult();
 	}
 
@@ -208,10 +227,31 @@ class MonetaSdk extends MonetaSdkMethods
      */
 	private function getCurrentMethodResult()
 	{
-		if ($this->error) {
-			return false;
-		}
-		return $this->result;
+        $sdkResult = new MonetaSdkResult();
+        $sdkResult->error = $this->error;
+        if ($this->error) {
+            $sdkResult->data = new MonetaSdkError();
+            $sdkResult->data->code = $this->errorCode;
+            $sdkResult->data->message = $this->errorMessage;
+            $sdkResult->render = $this->renderError();
+        }
+        else {
+            $sdkResult->data = $this->data;
+            $sdkResult->render = $this->render;
+        }
+
+		return $sdkResult;
 	}
+
+    /**
+     * @return MonetaSdkResult
+     */
+        private function getEmptyResult()
+    {
+        $sdkResult = new MonetaSdkResult();
+        $sdkResult->error = false;
+
+        return $sdkResult;
+    }
 
 }
