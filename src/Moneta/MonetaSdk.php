@@ -22,7 +22,7 @@ class MonetaSdk extends MonetaSdkMethods
         // return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
     }
 
-    // TODO: толстоватые мотоды, надо часть вынести в класс MonetaSdkMethods
+    // TODO: толстоваты мотоды, надо части кода вынести в класс MonetaSdkMethods
 
     /**
      * Create Assistant payment form
@@ -115,12 +115,12 @@ class MonetaSdk extends MonetaSdkMethods
             $postData[] = $var;
         }
 
-        $data = array("paySystem" => $paymentSystem, "orderId" => $orderId, "amount" => $amount, "currency" => $currency,
-            "action" => $action, "method" => $method, "formName" => $viewName, "formId" => $viewName, "postData" => $postData,
-            "additionalData" => $additionalData, "testMode" => $this->getSettingValue('monetasdk_test_mode'), "signature" => $signature,
-            "successUrl" => $this->getSettingValue('monetasdk_success_url'), "failUrl" => $this->getSettingValue('monetasdk_fail_url'),
-            "accountId" => $this->getSettingValue('monetasdk_account_id'), "isRegular" => $isRegular ? '1' : null,
-            "autoSubmit" => $autoSubmit ? '1' : null, "operationId" => $transactionId, "paymentSystemParams" => $paymentSystemParams);
+        $data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'currency' => $currency,
+            'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName, 'postData' => $postData,
+            'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'), 'signature' => $signature,
+            'successUrl' => $this->getSettingValue('monetasdk_success_url'), 'failUrl' => $this->getSettingValue('monetasdk_fail_url'),
+            'accountId' => $this->getSettingValue('monetasdk_account_id'), 'isRegular' => $isRegular ? '1' : null,
+            'autoSubmit' => $autoSubmit ? '1' : null, 'operationId' => $transactionId, 'paymentSystemParams' => $paymentSystemParams);
 
         $this->render = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
         $this->data = $data;
@@ -214,8 +214,6 @@ class MonetaSdk extends MonetaSdkMethods
             $function = str_replace('moneta', '', $function);
         }
         $this->executeSdkRequest($function, $args);
-
-
 
         return $this->getCurrentMethodResult();
 	}

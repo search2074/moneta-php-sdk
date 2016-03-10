@@ -6,11 +6,11 @@ use Moneta;
 
 class MonetaSdkMethods
 {
-	const EXCEPTION_NO_CONNECTION_TYPE      = "no connection type is defined: ";
+	const EXCEPTION_NO_CONNECTION_TYPE      = 'no connection type is defined: ';
 
-    const EXCEPTION_NO_MOTHOD               = "method is not exists: ";
+    const EXCEPTION_NO_MOTHOD               = 'method is not exists: ';
 
-    const EXCEPTION_MONETA                  = "merchantAPI error: ";
+    const EXCEPTION_MONETA                  = 'merchantAPI error: ';
 
     public $settings;
 
@@ -257,7 +257,7 @@ class MonetaSdkMethods
     public function renderError()
     {
         $viewName = 'ErrorMessage';
-        $data = array("error" => $this->error, "errorCode" => $this->errorCode, "errorMessage" => $this->errorMessage, "errorMessageHumanConverted" => $this->errorMessageHumanConverted);
+        $data = array('error' => $this->error, 'errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted);
         return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
     }
 
