@@ -221,7 +221,7 @@ class MonetaSdk extends MonetaSdkMethods
     /**
      * Prepare SDK results
      *
-     * @return bool
+     * @return MonetaSdkResult
      */
 	private function getCurrentMethodResult()
 	{
