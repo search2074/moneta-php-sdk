@@ -68,7 +68,7 @@ class MonetaSdk extends MonetaSdkMethods
             if (is_object($createInvoiceResult)) {
                 $transactionId = $createInvoiceResult->transaction;
             }
-            MonetaSdkUtils::handleEvent('InvoiceCreated');
+            MonetaSdkUtils::handleEvent('InvoiceCreated', $this->getSettingValue('monetasdk_event_files_path'));
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -126,7 +126,7 @@ class MonetaSdk extends MonetaSdkMethods
         $eventType = $this->detectEventTypeFromVars();
         if ($eventType) {
             // handle event
-            $isEventHandled = MonetaSdkUtils::handleEvent($eventType);
+            $isEventHandled = MonetaSdkUtils::handleEvent($eventType, $this->getSettingValue('monetasdk_event_files_path'));
 
             // handle internal event
             if (in_array($eventType, $this->getInternalEventNames())) {
@@ -160,7 +160,7 @@ class MonetaSdk extends MonetaSdkMethods
                         if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
                             $orderId = $this->getRequestedValue('MNT_TRANSACTION_ID');
                             $amount = $this->getRequestedValue('MNT_AMOUNT');
-                            $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess');
+                            $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess', $this->getSettingValue('monetasdk_event_files_path'));
                             die('SUCCESS');
                         }
                         else {

@@ -63,12 +63,18 @@ class MonetaSdkUtils
 	}
 
 
-    public static function handleEvent($eventName)
+    public static function handleEvent($eventName, $externalPath = null)
     {
         // TODO: согласно паттерну, здесь надо только зарегистрировать событие (собрать в массив отдельного класса), а диспатч всех событий надо делать в цикле после полного выполнения основного кода, проходя по собранному ранее массиву
 
         $result = false;
-        $eventFileName = __DIR__ . self::EVENTS_FILES_PATH . $eventName . '.php';
+        if (!$externalPath && $externalPath != '') {
+            $eventFileName = __DIR__ . $externalPath . $eventName . '.php';
+        }
+        else {
+            $eventFileName = __DIR__ . self::EVENTS_FILES_PATH . $eventName . '.php';
+        }
+
         if (file_exists($eventFileName)) {
             require_once($eventFileName);
             $result = true;

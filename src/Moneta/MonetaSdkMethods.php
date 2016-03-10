@@ -373,7 +373,7 @@ class MonetaSdkMethods
             }
             else {
                 $this->errorMessageHumanConverted = $this->settings['0'];
-                $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable');
+                $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', $this->getSettingValue('monetasdk_event_files_path'));
             }
         }
 
