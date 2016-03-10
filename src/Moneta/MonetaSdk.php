@@ -19,7 +19,7 @@ class MonetaSdk extends MonetaSdkMethods
 
 
         $viewName = 'ChoosePaymentSystemForm';
-        // return MonetaSdkUtils::requireView($viewName, $data);
+        // return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
     }
 
     /**
@@ -108,7 +108,7 @@ class MonetaSdk extends MonetaSdkMethods
             "accountId" => $this->getSettingValue('monetasdk_account_id'), "isRegular" => $isRegular ? '1' : null,
             "autoSubmit" => $autoSubmit ? '1' : null, "operationId" => $transactionId, "paymentSystemParams" => $paymentSystemParams);
 
-        $this->rendered = MonetaSdkUtils::requireView($viewName, $data);
+        $this->rendered = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
         $this->result = $data;
 
         return $this->getCurrentMethodResult();

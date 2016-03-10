@@ -48,10 +48,16 @@ class MonetaSdkUtils
 	}
 
 
-	public function requireView($viewName, $data)
+	public function requireView($viewName, $data, $externalPath = null)
 	{
         $result = false;
-        $viewFileName = __DIR__ . self::VIEW_FILES_PATH . $viewName . '.php';
+        if (!$externalPath && $externalPath != '') {
+            $viewFileName = __DIR__ . $externalPath . $viewName . '.php';
+        }
+        else {
+            $viewFileName = __DIR__ . self::VIEW_FILES_PATH . $viewName . '.php';
+        }
+
 		if (file_exists($viewFileName)) {
             ob_start();
 			require_once($viewFileName);

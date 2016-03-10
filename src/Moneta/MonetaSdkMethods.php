@@ -379,14 +379,4 @@ class MonetaSdkMethods
 
     }
 
-    /**
-     * @param $viewName
-     * @param $data
-     * @return bool|string
-     */
-    private function renderView($viewName, $data)
-    {
-        return MonetaSdkUtils::requireView($viewName, $data);
-    }
-
 }
