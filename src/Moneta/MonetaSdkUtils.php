@@ -24,15 +24,20 @@ class MonetaSdkUtils
 	const EXCEPTION_NO_VALUE_IN_ARRAY 	= "no vallue in array: ";
 
 
-	public static function getAllSettings()
+	public static function getAllSettings($configPath = null)
 	{
-		$arBasicSettings 	= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_BASIC_SETTINGS);
-		$arDataStorage 		= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_DATA_STORAGE);
-		$arPaymentSystems 	= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_PAYMENT_SYSTEMS);
-		$arPaymentUrls 		= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_PAYMENT_URLS);
-		$arSuccessFailUrls 	= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_SUCCESS_FAIL_URLS);
-		$arErrorTexts 		= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_ERROR_TEXTS);
-        $arAdditionalFields	= self::getSettingsFromIniFile(__DIR__ . self::INI_FILES_PATH . self::INI_FILE_ADDITIONAL_FIELDS);
+		$iniFilesPath = self::INI_FILES_PATH;
+		if ($configPath) {
+			$iniFilesPath = $configPath;
+		}
+
+		$arBasicSettings 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_BASIC_SETTINGS);
+		$arDataStorage 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_DATA_STORAGE);
+		$arPaymentSystems 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_PAYMENT_SYSTEMS);
+		$arPaymentUrls 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_PAYMENT_URLS);
+		$arSuccessFailUrls 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_SUCCESS_FAIL_URLS);
+		$arErrorTexts 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_ERROR_TEXTS);
+        $arAdditionalFields	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_ADDITIONAL_FIELDS);
 
 		return array_merge($arBasicSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields);
 	}
@@ -69,7 +74,7 @@ class MonetaSdkUtils
 	}
 
 
-    public static function handleEvent($eventName, $externalPath = null)
+    public static function handleEvent($eventName, $data, $externalPath = null)
     {
         // TODO: согласно паттерну, здесь надо только зарегистрировать событие (собрать в массив отдельного класса), а диспатч всех событий надо делать в цикле после полного выполнения основного кода, проходя по собранному ранее массиву
 

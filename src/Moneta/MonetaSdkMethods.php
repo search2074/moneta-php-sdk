@@ -115,6 +115,15 @@ class MonetaSdkMethods
     }
 
     /**
+     * @param $name
+     * @param $value
+     */
+    public function setSettingValue($name, $value)
+    {
+        $this->settings[$name] = $value;
+    }
+
+    /**
      * Create new invoice
      *
      * @param null $payer
@@ -382,7 +391,7 @@ class MonetaSdkMethods
             }
             else {
                 $this->errorMessageHumanConverted = $this->settings['0'];
-                $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', $this->getSettingValue('monetasdk_event_files_path'));
+                $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
             }
         }
 

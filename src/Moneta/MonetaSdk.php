@@ -6,11 +6,11 @@ use Moneta;
 
 class MonetaSdk extends MonetaSdkMethods
 {
-	function __construct()
+	function __construct($configPath = null)
 	{
         $this->events = array();
         $this->calledMethods = array();
-		$this->settings = MonetaSdkUtils::getAllSettings();
+		$this->settings = MonetaSdkUtils::getAllSettings($configPath);
 	}
 
     // TODO: пусть сохраняет алиас выбранного способа в куку.  Аргумент - типы систем для выбора.
@@ -35,14 +35,14 @@ class MonetaSdk extends MonetaSdkMethods
      * @param string $method
      * @return bool
      */
-    public function showPaymentFrom($orderId, $amount, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST', $currency = 'RUB')
+    public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
         $this->calledMethods[] = __FUNCTION__;
 
         // pre Execute
         if (!in_array('processInputData', $this->calledMethods)) {
             $this->processInputData('ForwardPaymentForm');
-            if (isset($this->data['event'])) {
+            if (isset($this->data['event']) && $this->data['event'] == 'ForwardPaymentForm') {
                 return $this->getCurrentMethodResult();
             }
         }
@@ -81,7 +81,7 @@ class MonetaSdk extends MonetaSdkMethods
             if (is_object($createInvoiceResult)) {
                 $transactionId = $createInvoiceResult->transaction;
             }
-            MonetaSdkUtils::handleEvent('InvoiceCreated', $this->getSettingValue('monetasdk_event_files_path'));
+            MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -115,12 +115,13 @@ class MonetaSdk extends MonetaSdkMethods
             $postData[] = $var;
         }
 
-        $data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'currency' => $currency,
-            'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName, 'postData' => $postData,
-            'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'), 'signature' => $signature,
-            'successUrl' => $this->getSettingValue('monetasdk_success_url'), 'failUrl' => $this->getSettingValue('monetasdk_fail_url'),
-            'accountId' => $this->getSettingValue('monetasdk_account_id'), 'isRegular' => $isRegular ? '1' : null,
-            'autoSubmit' => $autoSubmit ? '1' : null, 'operationId' => $transactionId, 'paymentSystemParams' => $paymentSystemParams);
+        $data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
+            'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
+            'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
+            'signature' => $signature, 'successUrl' => $this->getSettingValue('monetasdk_success_url'),
+            'failUrl' => $this->getSettingValue('monetasdk_fail_url'), 'accountId' => $this->getSettingValue('monetasdk_account_id'),
+            'isRegular' => $isRegular ? '1' : null, 'autoSubmit' => $autoSubmit ? '1' : null, 'operationId' => $transactionId,
+            'paymentSystemParams' => $paymentSystemParams);
 
         $this->render = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
         $this->data = $data;
@@ -140,13 +141,15 @@ class MonetaSdk extends MonetaSdkMethods
 
         $eventType = $this->detectEventTypeFromVars();
 
+        $processResultData = array();
+
         if ($eventType && (!$definedEventType || $definedEventType == $eventType)) {
             // handle event
-            $isEventHandled = MonetaSdkUtils::handleEvent($eventType, $this->getSettingValue('monetasdk_event_files_path'));
+            $isEventHandled = MonetaSdkUtils::handleEvent($eventType, array('postVars' => $_POST, 'getVars' => $_GET, 'cookieVars' => $_COOKIE), $this->getSettingValue('monetasdk_event_files_path'));
 
             // handle internal event
             if (in_array($eventType, $this->getInternalEventNames())) {
-
+                // TODO: сделать нормальную фабрику
                 switch ($eventType) {
                     case 'ForwardPaymentForm':
                         $formMethod     = $this->getRequestedValue('MNT_FORM_METHOD');
@@ -156,6 +159,7 @@ class MonetaSdk extends MonetaSdkMethods
                         $isRegular      = $this->getRequestedValue('MNT_IS_REGULAR', $formMethod);
                         $method         = $this->getRequestedValue('MNT_FORM_METHOD', $formMethod);
                         $currency       = $this->getRequestedValue('MNT_CURRENCY_CODE', $formMethod);
+                        $description    = $this->getRequestedValue('MNT_DESCRIPTION', $formMethod);
 
                         $additionalData = array();
                         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
@@ -163,7 +167,7 @@ class MonetaSdk extends MonetaSdkMethods
                             $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
                         }
 
-                        $this->showPaymentFrom($orderId, $amount, $paymentSystem, $isRegular, $additionalData, $method, $currency);
+                        $this->showPaymentFrom($orderId, $amount, $currency, $description, $paymentSystem, $isRegular, $additionalData, $method);
                         break;
 
                     case 'MonetaSendCallBack':
@@ -172,15 +176,16 @@ class MonetaSdk extends MonetaSdkMethods
                         if ($monetaAccountCode && $monetaAccountCode != '') {
                             $signature = md5( $this->getRequestedValue('MNT_ID') . $this->getRequestedValue('MNT_TRANSACTION_ID') . $this->getRequestedValue('MNT_OPERATION_ID') . $this->getRequestedValue('MNT_AMOUNT') . $this->getRequestedValue('MNT_CURRENCY_CODE') . $this->getRequestedValue('MNT_TEST_MODE') . $monetaAccountCode );
                         }
-
                         if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
-                            $orderId = $this->getRequestedValue('MNT_TRANSACTION_ID');
-                            $amount = $this->getRequestedValue('MNT_AMOUNT');
-                            $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess', $this->getSettingValue('monetasdk_event_files_path'));
-                            die('SUCCESS');
+                            $processResultData['orderId'] = $this->getRequestedValue('MNT_TRANSACTION_ID');
+                            $processResultData['amount'] = $this->getRequestedValue('MNT_AMOUNT');
+                            $processResultData['answer'] = 'SUCCESS';
+                            $this->render = 'SUCCESS';
+                            $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess', array('orderId' => $processResultData['orderId'], 'amount' => $processResultData['amount']), $this->getSettingValue('monetasdk_event_files_path'));
                         }
                         else {
-                            die('FAIL');
+                            $processResultData['answer'] = 'FAIL';
+                            $this->render = 'FAIL';
                         }
 
                         break;
@@ -189,7 +194,7 @@ class MonetaSdk extends MonetaSdkMethods
                 $this->events[] = $eventType;
             }
 
-            $this->data = array("event" => $eventType);
+            $this->data = array("event" => $eventType, "processResultData" => $processResultData);
 
         }
 

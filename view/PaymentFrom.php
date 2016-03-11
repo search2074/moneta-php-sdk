@@ -13,6 +13,7 @@
     <input type="hidden" name="MNT_TRANSACTION_ID" value="<?= $data['orderId']; ?>">
     <input type="hidden" name="MNT_CURRENCY_CODE" value="<?= $data['currency']; ?>">
     <input type="hidden" name="MNT_AMOUNT" value="<?= $data['amount']; ?>">
+    <input type="hidden" name="MNT_DESCRIPTION" value="<?= $data['description']; ?>">
     <input type="hidden" name="MNT_TEST_MODE" value="<?= $data['testMode']; ?>">
     <input type="hidden" name="MNT_SIGNATURE" value="<?= $data['signature']; ?>">
     <input type="hidden" name="MNT_SUCCESS_URL" value="<?= $data['successUrl']; ?>">
