@@ -140,19 +140,16 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $eventType = $this->detectEventTypeFromVars();
-
         $processResultData = array();
-
         if ($eventType && (!$definedEventType || $definedEventType == $eventType)) {
             // handle event
             $isEventHandled = MonetaSdkUtils::handleEvent($eventType, array('postVars' => $_POST, 'getVars' => $_GET, 'cookieVars' => $_COOKIE), $this->getSettingValue('monetasdk_event_files_path'));
-
             // handle internal event
             if (in_array($eventType, $this->getInternalEventNames())) {
                 // TODO: сделать нормальную фабрику
                 switch ($eventType) {
                     case 'ForwardPaymentForm':
-                        $formMethod     = $this->getRequestedValue('MNT_FORM_METHOD');
+                        $formMethod     = $this->getRequestedValueSource('MNT_FORM_METHOD');
                         $orderId        = $this->getRequestedValue('MNT_TRANSACTION_ID', $formMethod);
                         $amount         = $this->getRequestedValue('MNT_AMOUNT', $formMethod);
                         $paymentSystem  = $this->getRequestedValue('MNT_PAY_SYSTEM', $formMethod);
@@ -176,6 +173,7 @@ class MonetaSdk extends MonetaSdkMethods
                         if ($monetaAccountCode && $monetaAccountCode != '') {
                             $signature = md5( $this->getRequestedValue('MNT_ID') . $this->getRequestedValue('MNT_TRANSACTION_ID') . $this->getRequestedValue('MNT_OPERATION_ID') . $this->getRequestedValue('MNT_AMOUNT') . $this->getRequestedValue('MNT_CURRENCY_CODE') . $this->getRequestedValue('MNT_TEST_MODE') . $monetaAccountCode );
                         }
+
                         if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
                             $processResultData['orderId'] = $this->getRequestedValue('MNT_TRANSACTION_ID');
                             $processResultData['amount'] = $this->getRequestedValue('MNT_AMOUNT');

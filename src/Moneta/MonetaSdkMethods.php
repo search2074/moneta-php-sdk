@@ -213,6 +213,23 @@ class MonetaSdkMethods
     }
 
     /**
+     * @param $var
+     * @return null|string
+     */
+    public function getRequestedValueSource($var)
+    {
+        $source = null;
+        if (isset($_POST[$var])) {
+            $source = 'post';
+        }
+        if (isset($_GET[$var])) {
+            $source = 'get';
+        }
+
+        return $source;
+    }
+
+    /**
      * @param $vars
      * @param null $source
      * @return array
@@ -257,7 +274,7 @@ class MonetaSdkMethods
      */
     public function getInternalEventNames()
     {
-        return array('ForwardPaymentForm');
+        return array('ForwardPaymentForm', 'MonetaSendCallBack');
     }
 
     /**
