@@ -20,9 +20,24 @@
     <input type="hidden" name="MNT_FAIL_URL" value="<?= $data['failUrl']; ?>">
 
     <input type="hidden" name="followup" value="true">
-    <input type="hidden" name="paymentSystem.accountId" value="<?= $data['paymentSystemParams']['accountId']; ?>">
-    <input type="hidden" name="paymentSystem.unitId" value="<?= $data['paymentSystemParams']['unitId']; ?>">
-    <input type="hidden" name="paymentSystem.limitIds" value="<?= $data['paymentSystemParams']['unitId']; ?>">
+
+    <?php
+        if ($data['paymentSystemParams']['accountId']) {
+    ?>
+            <input type="hidden" name="paymentSystem.accountId" value="<?= $data['paymentSystemParams']['accountId']; ?>">
+    <?php
+        }
+    ?>
+    
+
+    <?php
+        if ($data['paymentSystemParams']['unitId']) {
+    ?>
+            <input type="hidden" name="paymentSystem.unitId" value="<?= $data['paymentSystemParams']['unitId']; ?>">
+            <input type="hidden" name="paymentSystem.limitIds" value="<?= $data['paymentSystemParams']['unitId']; ?>">
+    <?php
+        }
+    ?>
 
     <input type="hidden" name="MNT_PAY_SYSTEM" value="<?= $data['paySystem']; ?>">
     <input type="hidden" name="MNT_IS_REGULAR" value="<?= $data['isRegular']; ?>">
