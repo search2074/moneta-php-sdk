@@ -13,16 +13,44 @@ class MonetaSdk extends MonetaSdkMethods
 		$this->settings = MonetaSdkUtils::getAllSettings($configPath);
 	}
 
-    // TODO: пусть сохраняет алиас выбранного способа в куку.  Аргумент - типы систем для выбора.
-    public function showChoosePaymentSystemForm($paySystemTypes = array())
+    /**
+     * Creates payment system choose form
+     *
+     * @param array $paySystemTypes
+     * @return MonetaSdkResult
+     */
+    public function showChoosePaymentSystemForm($redirectUrl = null, $paySystemTypes = array())
     {
         $this->calledMethods[] = __FUNCTION__;
 
         $viewName = 'ChoosePaymentSystemForm';
-        // return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        MonetaSdkUtils::setSdkCookie('paysysredirect', $redirectUrl);
+
+        $paySystems = array();
+        foreach ($this->settings AS $oneSettingParameterKey => $oneSettingParameterVal) {
+            if (strpos($oneSettingParameterKey, 'monetasdk_paysys_') !== false && isset($oneSettingParameterVal['group']) && (in_array($oneSettingParameterVal['group'], $paySystemTypes) || !count($paySystemTypes))) {
+                $paySystems[$oneSettingParameterKey] = $oneSettingParameterVal;
+            }
+        }
+
+        $this->data = $paySystems;
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+
+        return $this->getCurrentMethodResult();
     }
 
-    // TODO: толстоваты мотоды, надо части кода вынести в класс MonetaSdkMethods
+
+    /**
+     * @return bool
+     */
+    public function processCleanChoosenPaymentSystem()
+    {
+        $this->data = MonetaSdkUtils::setSdkCookie('paysys', null);
+        return $this->getEmptyResult();
+    }
 
     /**
      * Create Assistant payment form
@@ -53,35 +81,16 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $amount = number_format($amount, 2, '.', '');
-
-        if (!$paymentSystem && isset($_COOKIE['mnt_data']) && $_COOKIE['mnt_data']) {
-            $cookieMntSerializedData = $_COOKIE['mnt_data'];
-            $cookieMntData = @unserialize($cookieMntSerializedData);
-            if (isset($cookieMntData['paysys']) && $cookieMntData['paysys']) {
-                $paymentSystem = $cookieMntData['paysys'];
-            }
-        }
-
-        if (!$paymentSystem) {
-            $paymentSystem = 'payanyway';
-        }
+        $paymentSystem = $this->selectPaymentSystem($paymentSystem);
 
         $autoSubmit = false;
         $transactionId = 0;
 
-        // смотрим нужно ли создавать счёт для выбранного платежного метода
-        // если $isRegular, тогда тоже надо создавать invoice
         $paymentSystemParams = $this->getSettingValue('monetasdk_paysys_' . $paymentSystem);
-
-        // если нужно, то создадим счёт в монете
         if (($additionalData && $paymentSystemParams['createInvoice']) || ($isRegular && $paymentSystem == 'plastic')) {
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
-            $createInvoiceResult = $this->pvtMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
-            if (is_object($createInvoiceResult)) {
-                $transactionId = $createInvoiceResult->transaction;
-            }
-            MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
+            $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -104,16 +113,7 @@ class MonetaSdk extends MonetaSdkMethods
         }
 
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
-        $varData = $this->addAdditionalData($additionalFields);
-        $postData = array();
-        foreach ($varData AS $var) {
-            if (isset($var['var'])) {
-                $var['name'] = $this->getSettingValue($var['var']);
-                $var['var'] = str_replace('_', '.', $var['var']);
-            }
-
-            $postData[] = $var;
-        }
+        $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
 
         $data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
             'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
@@ -130,6 +130,7 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
+     * TODO
      * Switch and execute an action
      */
     public function processInputData($definedEventType = null)
@@ -146,7 +147,6 @@ class MonetaSdk extends MonetaSdkMethods
             $isEventHandled = MonetaSdkUtils::handleEvent($eventType, array('postVars' => $_POST, 'getVars' => $_GET, 'cookieVars' => $_COOKIE), $this->getSettingValue('monetasdk_event_files_path'));
             // handle internal event
             if (in_array($eventType, $this->getInternalEventNames())) {
-                // TODO: сделать нормальную фабрику
                 switch ($eventType) {
                     case 'ForwardPaymentForm':
                         $formMethod     = $this->getRequestedValueSource('MNT_FORM_METHOD');
@@ -187,6 +187,19 @@ class MonetaSdk extends MonetaSdkMethods
                         }
 
                         break;
+
+                    case 'ForwardChoosePaymentSystemForm':
+                        $getChoosenPaymentSystem = str_replace('monetasdk_paysys_', '' , $this->getRequestedValue('choosePaySysByType'));
+                        MonetaSdkUtils::setSdkCookie('paysys', $getChoosenPaymentSystem);
+                        $redirectUrl = MonetaSdkUtils::getSdkCookie('paysysredirect');
+                        if (!$redirectUrl) {
+                            $redirectUrl = "/";
+                        }
+
+                        $this->pvtRedirectAfterChoosePaymentSystemForm($redirectUrl);
+
+                        break;
+
                 }
 
                 $this->events[] = $eventType;
@@ -222,6 +235,15 @@ class MonetaSdk extends MonetaSdkMethods
 	}
 
     /**
+     * @param $url
+     */
+    private function pvtRedirectAfterChoosePaymentSystemForm($url)
+    {
+        header("Location: {$url}");
+        exit;
+    }
+
+    /**
      * Prepare SDK results
      *
      * @return MonetaSdkResult
@@ -247,12 +269,51 @@ class MonetaSdk extends MonetaSdkMethods
     /**
      * @return MonetaSdkResult
      */
-        private function getEmptyResult()
+    private function getEmptyResult()
     {
         $sdkResult = new MonetaSdkResult();
         $sdkResult->error = false;
 
         return $sdkResult;
+    }
+
+    /**
+     * @param $paymentSystem
+     * @return mixed|null|string
+     */
+    private function selectPaymentSystem($paymentSystem)
+    {
+        if (!$paymentSystem) {
+            $paymentSystem = MonetaSdkUtils::getSdkCookie('paysys');
+        }
+
+        if (!$paymentSystem) {
+            $paymentSystem = 'payanyway';
+        }
+        else {
+            $paymentSystem = str_replace('monetasdk_paysys_', '', $paymentSystem);
+        }
+
+        return $paymentSystem;
+    }
+
+    /**
+     * @param $varData
+     * @return array
+     */
+    private function createPostDataFromArray($varData)
+    {
+        $postData = array();
+        foreach ($varData AS $var) {
+            if (isset($var['var'])) {
+                $var['name'] = $this->getSettingValue($var['var']);
+                $var['var'] = str_replace('_', '.', $var['var']);
+            }
+
+            $postData[] = $var;
+        }
+
+        return $postData;
     }
 
 }

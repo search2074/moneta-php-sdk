@@ -53,7 +53,7 @@ class MonetaSdkUtils
 	}
 
 
-	public function requireView($viewName, $data, $externalPath = null)
+	public static function requireView($viewName, $data, $externalPath = null)
 	{
         $result = false;
         if (!$externalPath && $externalPath != '') {
@@ -76,8 +76,6 @@ class MonetaSdkUtils
 
     public static function handleEvent($eventName, $data, $externalPath = null)
     {
-        // TODO: согласно паттерну, здесь надо только зарегистрировать событие (собрать в массив отдельного класса), а диспатч всех событий надо делать в цикле после полного выполнения основного кода, проходя по собранному ранее массиву
-
         $result = false;
         if (!$externalPath && $externalPath != '') {
             $eventFileName = __DIR__ . $externalPath . $eventName . '.php';
@@ -103,5 +101,45 @@ class MonetaSdkUtils
 
 		return parse_ini_file($fileName, true);
 	}
+
+
+	public static function getSdkCookie($cookieName)
+	{
+		$result = null;
+		if ($cookieName && isset($_COOKIE['mnt_data']) && $_COOKIE['mnt_data']) {
+			$cookieMntSerializedData = $_COOKIE['mnt_data'];
+			$cookieMntData = @unserialize($cookieMntSerializedData);
+			if (isset($cookieMntData[$cookieName]) && $cookieMntData[$cookieName]) {
+				$result = $cookieMntData[$cookieName];
+			}
+		}
+		return $result;
+	}
+
+
+	public static function setSdkCookie($cookieName, $cookieValue)
+	{
+		if (!$cookieName) {
+			return false;
+		}
+
+		if (!$cookieValue) {
+			$cookieValue = '';
+		}
+
+		$cookieMntData = null;
+		if (isset($_COOKIE['mnt_data']) && $_COOKIE['mnt_data']) {
+			$cookieMntSerializedData = $_COOKIE['mnt_data'];
+			$cookieMntData = @unserialize($cookieMntSerializedData);
+		}
+		if (!$cookieMntData) {
+			$cookieMntData = array();
+		}
+		$cookieMntData[$cookieName] = $cookieValue;
+		setcookie('mnt_data', serialize($cookieMntData));
+
+		return true;
+	}
+
 
 }

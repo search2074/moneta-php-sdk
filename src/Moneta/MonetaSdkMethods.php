@@ -124,6 +124,28 @@ class MonetaSdkMethods
     }
 
     /**
+     * @param null $payer
+     * @param $payee
+     * @param $amount
+     * @param $orderId
+     * @param string $paymentSystem
+     * @param bool|false $isRegular
+     * @param null $additionalData
+     * @return int
+     * @throws MonetaSdkException
+     */
+    public function sdkMonetaCreateInvoice($payer = null, $payee, $amount, $orderId, $paymentSystem = 'payanyway', $isRegular = false, $additionalData = null)
+    {
+        $transactionId = 0;
+        $createInvoiceResult = $this->pvtMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
+        if (is_object($createInvoiceResult)) {
+            $transactionId = $createInvoiceResult->transaction;
+        }
+        MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
+        return $transactionId;
+    }
+
+    /**
      * Create new invoice
      *
      * @param null $payer
@@ -135,7 +157,7 @@ class MonetaSdkMethods
      * @return mixed
      * @throws MonetaSdkException
      */
-    public function pvtMonetaCreateInvoice($payer = null, $payee, $amount, $transactionId, $paymentSystem = 'payanyway', $isRegular = false, $additionalData = null)
+    private function pvtMonetaCreateInvoice($payer = null, $payee, $amount, $transactionId, $paymentSystem = 'payanyway', $isRegular = false, $additionalData = null)
     {
         try
         {
@@ -258,6 +280,11 @@ class MonetaSdkMethods
     public function detectEventTypeFromVars()
     {
         $detectedEvent = false;
+
+        if ($this->isFieldsSet(array('choosePaySysByType'))) {
+            $detectedEvent = 'ForwardChoosePaymentSystemForm';
+        }
+
         if ($this->isFieldsSet(array('MNT_ID', 'MNT_TRANSACTION_ID', 'MNT_AMOUNT'))) {
             $detectedEvent = 'ForwardPaymentForm';
         }
@@ -274,7 +301,7 @@ class MonetaSdkMethods
      */
     public function getInternalEventNames()
     {
-        return array('ForwardPaymentForm', 'MonetaSendCallBack');
+        return array('ForwardChoosePaymentSystemForm', 'ForwardPaymentForm', 'MonetaSendCallBack');
     }
 
     /**
