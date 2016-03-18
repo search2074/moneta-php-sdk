@@ -51,11 +51,23 @@ class MonetaSdkMethods
 
         try {
             $result = call_user_func_array(array($this->monetaService, $function), $args);
-            $this->data = json_decode(json_encode($result), true);
-            $this->render = MonetaSdkUtils::requireView($function, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+            $response = json_decode(json_encode($result), true);
+
+            if ($this->getSettingValue('monetasdk_debug_mode')) {
+                MonetaSdkUtils::addToLog("executeSdkRequest:\n" . print_r($response, true));
+            }
+
+            if ($this->monetaConnectionType == 'json' && isset($response['Envelope']['Body']['fault'])) {
+                // error is detected
+                $this->parseJsonException($response['Envelope']['Body']['fault']);
+            }
+            else {
+                $this->data = $response;
+                $this->render = MonetaSdkUtils::requireView($function, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+            }
         }
         catch (\Exception $e) {
-            $this->parseException($e);
+            $this->parseSoapException($e);
         }
     }
 
@@ -82,7 +94,17 @@ class MonetaSdkMethods
 				$this->monetaService = new MonetaSdkSoapConnector($wsdl, $username, $password, $options, $isDebug);
 			}
 			else if ($this->monetaConnectionType == 'json') {
-				// json connection not require initializition
+				// TODO: send all json request param
+                $jsonConnectionUrl       = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
+                if ($this->getSettingValue('monetasdk_use_x509')) {
+                    $jsonConnectionUrl  .= $this->getSettingValue('monetasdk_x509_port') ? ":".$this->getSettingValue('monetasdk_x509_port') : "";
+                }
+                $jsonConnectionUrl      .= $this->getSettingValue('monetasdk_use_x509') ? $this->getSettingValue('monetasdk_x509_json_link') : $this->getSettingValue('monetasdk_json_link');
+                $username	= $this->getSettingValue('monetasdk_account_username');
+                $password	= $this->getSettingValue('monetasdk_account_password');
+                $isDebug	= $this->getSettingValue('monetasdk_debug_mode');
+                // connect to moneta json service
+                $this->monetaService = new MonetaSdkJsonConnector($jsonConnectionUrl, $username, $password, $isDebug);
 			}
 			else {
                 $this->error = true;
@@ -138,8 +160,15 @@ class MonetaSdkMethods
     {
         $transactionId = 0;
         $createInvoiceResult = $this->pvtMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
+
         if (is_object($createInvoiceResult)) {
             $transactionId = $createInvoiceResult->transaction;
+        }
+        else if (is_array($createInvoiceResult) && isset($createInvoiceResult['transaction'])) {
+            $transactionId = $createInvoiceResult['transaction'];
+        }
+        else {
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateInvoice: no transactionId received');
         }
         MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
         return $transactionId;
@@ -187,7 +216,17 @@ class MonetaSdkMethods
             }
 
             $invoiceRequest->operationInfo = $operationInfo;
-            return $this->monetaService->Invoice($invoiceRequest);
+            $invoiceResponse = $this->monetaService->Invoice($invoiceRequest);
+
+            if ($this->monetaConnectionType == 'json' && isset($invoiceResponse['Envelope']['Body']['fault'])) {
+                // error is detected
+                $e = $invoiceResponse['Envelope']['Body']['fault'];
+                throw new MonetaSdkException(self::EXCEPTION_MONETA . 'pvtMonetaCreateInvoice: ' . print_r($e, true));
+            }
+            else {
+                return $invoiceResponse;
+            }
+
         }
         catch (Exception $e)
         {
@@ -415,7 +454,7 @@ class MonetaSdkMethods
     /**
      * @param $e
      */
-    private function parseException($e)
+    private function parseSoapException($e)
     {
         $this->error = true;
 
@@ -437,6 +476,33 @@ class MonetaSdkMethods
                 $this->errorMessageHumanConverted = $this->settings['0'];
                 $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
             }
+        }
+
+    }
+
+    /**
+     * @param $data
+     */
+    private function parseJsonException($data)
+    {
+        $this->error = true;
+
+        if ($this->getSettingValue('monetasdk_debug_mode')) {
+            MonetaSdkUtils::addToLog("parseJsonException:\n" . $data);
+        }
+
+        if (isset($data['detail']['faultDetail'])) {
+            $this->errorCode = $data['detail']['faultDetail'];
+        }
+        if (isset($data['faultstring'])) {
+            $this->errorMessage = $data['faultstring'];
+        }
+        if ($this->errorCode && isset($this->settings[$this->errorCode])) {
+            $this->errorMessageHumanConverted = $this->settings[$this->errorCode];
+        }
+        else {
+            $this->errorMessageHumanConverted = $this->settings['0'];
+            $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
         }
 
     }

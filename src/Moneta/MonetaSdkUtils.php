@@ -10,6 +10,7 @@ class MonetaSdkUtils
 	const INI_FILES_PATH 				= "/../../config/";
 	const VIEW_FILES_PATH 				= "/../../view/";
     const EVENTS_FILES_PATH 			= "/../../events/";
+	const LOGS_FILES_PATH 				= "/../../logs/";
 
 	const INI_FILE_BASIC_SETTINGS 		= "basic_settings.ini";
 	const INI_FILE_DATA_STORAGE 		= "data_storage.ini";
@@ -141,5 +142,22 @@ class MonetaSdkUtils
 		return true;
 	}
 
+
+	public static function addToLog($message)
+	{
+		$errorHandlerFileName = __DIR__ . self::LOGS_FILES_PATH . date("Ymd").".txt";
+        $result = null;
+        // save error message to log file
+        $fp = fopen($errorHandlerFileName, "a");
+        if ($fp) {
+            $message = "------------------------------------\n" . date("d.m.Y, H:i:s") . "\n" . $message;
+            flock($fp, LOCK_EX);
+            $result = fwrite($fp, $message);
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+
+        return $result;
+	}
 
 }
