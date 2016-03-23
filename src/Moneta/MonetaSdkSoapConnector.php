@@ -64,8 +64,6 @@ class MonetaSdkSoapConnector extends MonetaWebServiceConnector
 
 		$usernameToken = new \SoapVar($tmp, SOAP_ENC_OBJECT, null, $sns, 'wsse:UsernameToken', $sns);
 
-		//Объект UsernameToken присоединяется к своему родительскому XML-тегу <Security>
-		// и создается SoapHeader <Security>
 		$secHeaderValue = new \SoapVar($usernameToken, SOAP_ENC_OBJECT, NULL, $sns, 'wsse:Security', $sns);
 		return new \SoapHeader($sns, 'Security', $secHeaderValue, true);
 	}
@@ -73,7 +71,6 @@ class MonetaSdkSoapConnector extends MonetaWebServiceConnector
 
 	protected function call($method, $data, $options = null)
 	{
-		// этот костыль для установки версии API (нужен рефакторинг метода call)
 		if (is_object($data[0]))
 			$data[0]->version = $this->version;
 

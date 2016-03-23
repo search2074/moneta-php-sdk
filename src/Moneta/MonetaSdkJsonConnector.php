@@ -13,12 +13,24 @@ use Moneta\MonetaWebServiceConnector;
 
 class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 {
+    /**
+     * @var
+     */
 	private $jsonConnectionUrl;
 
+    /**
+     * @var
+     */
 	private $username;
 
+    /**
+     * @var
+     */
 	private $password;
 
+    /**
+     * @var
+     */
 	private $isDebug;
 
 
@@ -29,7 +41,12 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 	 */
 	public $version = "VERSION_2";
 
-
+    /**
+     * @param $jsonConnectionUrl
+     * @param null $username
+     * @param $password
+     * @param $isDebug
+     */
 	function __construct($jsonConnectionUrl, $username, $password, $isDebug)
 	{
 		$this->jsonConnectionUrl	= $jsonConnectionUrl;
@@ -38,17 +55,24 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 		$this->isDebug				= $isDebug;
 	}
 
-
+    /**
+     * @param string $method
+     * @param mixed $data
+     * @param null $options
+     * @return array|mixed|null|object
+     */
 	protected function call($method, $data, $options = null)
 	{
-		// этот костыль для установки версии API (нужен рефакторинг метода call)
-		if (is_object($data[0]))
-			$data[0]->version = $this->version;
-
+        // no need to send version via json connector
 		return $this->jsonCall($method, $data, $options);
 	}
 
-
+    /**
+     * @param $method
+     * @param $data
+     * @param $options
+     * @return array|mixed|null|object
+     */
 	private function jsonCall($method, $data, $options)
 	{
         $data = json_decode(json_encode($data), true);
@@ -75,7 +99,10 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
             }
 		}
 
-		$bodyData = array("{$method}Request" => array_merge(array("version" => $this->version), $inputData));
+		// $bodyData = array("{$method}Request" => array_merge(array("version" => $this->version), $inputData));
+        // no need to send version via json connector
+        $bodyData = array("{$method}Request" => $inputData);
+
         $requestData = array("Envelope" => array("Header" => array("Security" => array("UsernameToken" => array("Username" => $this->username, "Password" => $this->password))), "Body" => $bodyData));
         if ($this->isDebug) {
             MonetaSdkUtils::addToLog("jsonCall request:\n".print_r($requestData, true));

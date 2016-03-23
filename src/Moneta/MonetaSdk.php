@@ -27,7 +27,7 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
-        MonetaSdkUtils::setSdkCookie('paysysredirect', $redirectUrl);
+        MonetaSdkUtils::setSdkCookie('redirect', $redirectUrl);
 
         $paySystems = array();
         foreach ($this->settings AS $oneSettingParameterKey => $oneSettingParameterVal) {
@@ -41,7 +41,6 @@ class MonetaSdk extends MonetaSdkMethods
 
         return $this->getCurrentMethodResult();
     }
-
 
     /**
      * @return bool
@@ -115,7 +114,7 @@ class MonetaSdk extends MonetaSdkMethods
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
 
-        $data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
+        $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
             'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
             'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
             'signature' => $signature, 'successUrl' => $this->getSettingValue('monetasdk_success_url'),
@@ -123,10 +122,84 @@ class MonetaSdk extends MonetaSdkMethods
             'isRegular' => $isRegular ? '1' : null, 'autoSubmit' => $autoSubmit ? '1' : null, 'operationId' => $transactionId,
             'paymentSystemParams' => $paymentSystemParams);
 
-        $this->render = MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
-        $this->data = $data;
-
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
         return $this->getCurrentMethodResult();
+    }
+
+    /**
+     * @param $accountId
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function showAccountBalance($accountId)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        $viewName = 'AccountBalance';
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $balance = $this->sdkMonetaGetAccountBalance($accountId);
+        $this->data = array("account" => $accountId, "balance" => $balance);
+
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+        return $this->getCurrentMethodResult();
+    }
+
+    /**
+     * @param null $redirectUrl
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function showCreateUserForm($redirectUrl = null)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        // pre Execute
+        if (!in_array('processInputData', $this->calledMethods)) {
+            $this->processInputData('ForwardCreateUserForm');
+            if (isset($this->data['event']) && $this->data['event'] == 'ForwardCreateUserForm') {
+                return $this->getCurrentMethodResult();
+            }
+        }
+
+        MonetaSdkUtils::setSdkCookie('redirect', $redirectUrl);
+
+        // Execute
+        $viewName = 'CreateUserForm';
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+        return $this->getCurrentMethodResult();
+    }
+
+    /**
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function showAccountHistoryForm($accountId)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        // pre Execute
+        if (!in_array('processInputData', $this->calledMethods)) {
+            $this->processInputData('ForwardAccountHistoryForm');
+            if (isset($this->data['event']) && $this->data['event'] == 'ForwardAccountHistoryForm') {
+                return $this->getCurrentMethodResult();
+            }
+        }
+
+        // Execute
+        $viewName = 'AccountHistoryForm';
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $this->data = array("account" => $accountId);
+
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
+        return $this->getCurrentMethodResult();
+
     }
 
     /**
@@ -191,12 +264,49 @@ class MonetaSdk extends MonetaSdkMethods
                     case 'ForwardChoosePaymentSystemForm':
                         $getChoosenPaymentSystem = str_replace('monetasdk_paysys_', '' , $this->getRequestedValue('choosePaySysByType'));
                         MonetaSdkUtils::setSdkCookie('paysys', $getChoosenPaymentSystem);
-                        $redirectUrl = MonetaSdkUtils::getSdkCookie('paysysredirect');
+                        $redirectUrl = MonetaSdkUtils::getSdkCookie('redirect');
                         if (!$redirectUrl) {
                             $redirectUrl = "/";
                         }
 
-                        $this->pvtRedirectAfterChoosePaymentSystemForm($redirectUrl);
+                        $this->pvtRedirectAfterForm($redirectUrl);
+
+                        break;
+
+                    case 'ForwardCreateUserForm':
+                        $firstName  = $this->getRequestedValue('moneta_sdk_first_name');
+                        $lastName   = $this->getRequestedValue('moneta_sdk_last_name');
+                        $email      = $this->getRequestedValue('moneta_sdk_email');
+                        $gender     = $this->getRequestedValue('moneta_sdk_gender');
+                        $unitId     = $this->sdkMonetaCreateUser($firstName, $lastName, $email, $gender);
+                        $handleCreateUser = MonetaSdkUtils::handleEvent('CreateUserResult', array('unitId' => $unitId));
+                        if ($unitId) {
+                            $this->sdkMonetaCreateAccount($unitId, rand(10000, 99999), $email);
+                        }
+
+                        $redirectUrl = MonetaSdkUtils::getSdkCookie('redirect');
+                        if (!$redirectUrl) {
+                            $redirectUrl = "/";
+                        }
+
+                        $this->pvtRedirectAfterForm($redirectUrl);
+
+                        break;
+
+                    case 'ForwardAccountHistoryForm':
+                        $accountId  = $this->getRequestedValue('moneta_sdk_account');
+                        $dateFrom   = date("c", strtotime($this->getRequestedValue('moneta_sdk_date_from') . ' 00:00:00'));
+                        $dateTo     = date("c", strtotime($this->getRequestedValue('moneta_sdk_date_to') . ' 23:59:59'));
+                        $pageNumber = $this->getRequestedValue('moneta_sdk_page_number');
+                        if (!$pageNumber) {
+                            $pageNumber = 1;
+                        }
+
+                        $historyResult = $this->sdkMonetaHistory($accountId, $dateFrom, $dateTo, intval($this->getSettingValue('monetasdk_history_items_per_page')), $pageNumber);
+                        $processResultData = array( 'history' => $historyResult, 'moneta_sdk_account' => $accountId, 'moneta_sdk_date_from' => date('d.m.Y', strtotime($dateFrom)),
+                                                    'moneta_sdk_date_to' => date('d.m.Y', strtotime($dateTo)), 'moneta_sdk_page_number' => $pageNumber);
+
+                        $this->render = MonetaSdkUtils::requireView('AccountHistoryForm', $processResultData, $this->getSettingValue('monetasdk_view_files_path'));
 
                         break;
 
@@ -237,7 +347,7 @@ class MonetaSdk extends MonetaSdkMethods
     /**
      * @param $url
      */
-    private function pvtRedirectAfterChoosePaymentSystemForm($url)
+    private function pvtRedirectAfterForm($url)
     {
         header("Location: {$url}");
         exit;
