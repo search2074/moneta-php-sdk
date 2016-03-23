@@ -303,7 +303,7 @@ class MonetaSdk extends MonetaSdkMethods
                         }
 
                         $historyResult = $this->sdkMonetaHistory($accountId, $dateFrom, $dateTo, intval($this->getSettingValue('monetasdk_history_items_per_page')), $pageNumber);
-                        $processResultData = array( 'history' => $historyResult, 'moneta_sdk_account' => $accountId, 'moneta_sdk_date_from' => date('d.m.Y', strtotime($dateFrom)),
+                        $processResultData = array( 'history' => $historyResult, 'account' => $accountId, 'moneta_sdk_date_from' => date('d.m.Y', strtotime($dateFrom)),
                                                     'moneta_sdk_date_to' => date('d.m.Y', strtotime($dateTo)), 'moneta_sdk_page_number' => $pageNumber);
 
                         $this->render = MonetaSdkUtils::requireView('AccountHistoryForm', $processResultData, $this->getSettingValue('monetasdk_view_files_path'));
