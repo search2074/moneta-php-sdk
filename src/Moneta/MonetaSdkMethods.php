@@ -64,9 +64,9 @@ class MonetaSdkMethods
             }
 
             if ($this->monetaConnectionType == 'json' && isset($response['Envelope']['Body']['fault'])) {
-                // error is detected
+                // error is detected (json)
                 $this->parseJsonException($response['Envelope']['Body']['fault']);
-                echo $this->renderError();
+                throw new MonetaSdkException(self::EXCEPTION_MONETA . $function. " " . $this->errorMessage);
             }
             else {
                 $this->data = $response;
@@ -74,7 +74,9 @@ class MonetaSdkMethods
             }
         }
         catch (\Exception $e) {
+            // error is detected (soap)
             $this->parseSoapException($e);
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . $function. " " . $this->errorMessage);
         }
     }
 
@@ -207,6 +209,27 @@ class MonetaSdkMethods
         }
 
         return $balance;
+    }
+
+    /**
+     * @param $operationId
+     * @return array|bool|mixed|null|object
+     * @throws MonetaSdkException
+     */
+    public function sdkMonetaGetOperationDetailsById($operationId)
+    {
+        $result = false;
+        try {
+            $operationInfo = $this->GetOperationDetailsById($operationId);
+            $result = json_decode(json_encode($operationInfo, true));
+        }
+        catch (Exception $e)
+        {
+            $this->error = true;
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaGetOperationDetailsById: ' . print_r($e, true));
+        }
+
+        return $result;
     }
 
     /**

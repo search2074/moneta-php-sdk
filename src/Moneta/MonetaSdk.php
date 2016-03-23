@@ -158,8 +158,9 @@ class MonetaSdk extends MonetaSdkMethods
         $viewName = 'OperationInfo';
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
-        $operationInfo = $this->GetOperationDetailsById($operationId);
-        $operationInfo = json_decode(json_encode($operationInfo, true));
+
+        $operationInfo = $this->sdkMonetaGetOperationDetailsById($operationId);
+
         $this->data = array("operation" => $operationId, "info" => $operationInfo);
         $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
 
