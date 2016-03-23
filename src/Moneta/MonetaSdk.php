@@ -160,10 +160,9 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $operationInfo = $this->sdkMonetaGetOperationDetailsById($operationId);
-
         $this->data = array("operation" => $operationId, "info" => $operationInfo);
-        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
 
+        $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
         return $this->getCurrentMethodResult();
     }
 
@@ -300,9 +299,19 @@ class MonetaSdk extends MonetaSdkMethods
                         $email      = $this->getRequestedValue('moneta_sdk_email');
                         $gender     = $this->getRequestedValue('moneta_sdk_gender');
                         $unitId     = $this->sdkMonetaCreateUser($firstName, $lastName, $email, $gender);
-                        $handleCreateUser = MonetaSdkUtils::handleEvent('CreateUserResult', array('unitId' => $unitId));
+                        $unitData = array('unitId' => $unitId, 'firstName' => $firstName, 'lastName' => $lastName, 'email' => $email, 'gender' => $gender);
+                        $handleCreateUser = MonetaSdkUtils::handleEvent('CreateUserResult', $unitData);
+                        // добавить пользователю новый счёт
                         if ($unitId) {
-                            $this->sdkMonetaCreateAccount($unitId, rand(10000, 99999), $email);
+                            $processResultData = array_merge($processResultData, $unitData);
+                            $accountPaymentPassword = rand(10000, 99999);
+                            $accountId = $this->sdkMonetaCreateAccount($unitId, $accountPaymentPassword, $email);
+                            if ($accountId) {
+                                $accountData = array('unitId' => $unitId, 'accountId' => $accountId, 'accountPaymentPassword' => $accountPaymentPassword,
+                                                     'accountNotificationEmail' => $email);
+
+                                $processResultData = array_merge($processResultData, $accountData);
+                            }
                         }
 
                         $redirectUrl = MonetaSdkUtils::getSdkCookie('redirect');
@@ -327,6 +336,7 @@ class MonetaSdk extends MonetaSdkMethods
                         $processResultData = array( 'history' => $historyResult, 'account' => $accountId, 'moneta_sdk_date_from' => date('d.m.Y', strtotime($dateFrom)),
                                                     'moneta_sdk_date_to' => date('d.m.Y', strtotime($dateTo)), 'moneta_sdk_page_number' => $pageNumber);
 
+                        $processResultData = array_merge($processResultData, $processResultData);
                         $this->render = MonetaSdkUtils::requireView('AccountHistoryForm', $processResultData, $this->getSettingValue('monetasdk_view_files_path'));
 
                         break;
