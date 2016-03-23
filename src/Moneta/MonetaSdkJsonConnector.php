@@ -99,8 +99,14 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
             }
 		}
 
-		// $bodyData = array("{$method}Request" => array_merge(array("version" => $this->version), $inputData));
         // no need to send version via json connector
+		// $bodyData = array("{$method}Request" => array_merge(array("version" => $this->version), $inputData));
+
+        // some methods needs special argument values defined
+        if ($method == 'GetOperationDetailsById') {
+            $inputData = $inputData['value'];
+        }
+
         $bodyData = array("{$method}Request" => $inputData);
 
         $requestData = array("Envelope" => array("Header" => array("Security" => array("UsernameToken" => array("Username" => $this->username, "Password" => $this->password))), "Body" => $bodyData));

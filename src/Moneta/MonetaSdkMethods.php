@@ -66,6 +66,7 @@ class MonetaSdkMethods
             if ($this->monetaConnectionType == 'json' && isset($response['Envelope']['Body']['fault'])) {
                 // error is detected
                 $this->parseJsonException($response['Envelope']['Body']['fault']);
+                echo $this->renderError();
             }
             else {
                 $this->data = $response;
@@ -603,9 +604,10 @@ class MonetaSdkMethods
      */
     public function renderError()
     {
-        $viewName = 'ErrorMessage';
         $data = array('error' => $this->error, 'errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted);
-        return MonetaSdkUtils::requireView($viewName, $data, $this->getSettingValue('monetasdk_view_files_path'));
+        $renderResult = MonetaSdkUtils::requireView('ErrorMessage', $data, $this->getSettingValue('monetasdk_view_files_path'));
+        $this->render = $renderResult;
+        return $renderResult;
     }
 
     /**
@@ -728,7 +730,7 @@ class MonetaSdkMethods
                 $this->errorMessageHumanConverted = $this->settings[$this->errorCode];
             }
             else {
-                $this->errorMessageHumanConverted = $this->settings['0'];
+                $this->errorMessageHumanConverted = $this->errorMessage;
                 $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
             }
         }
@@ -756,7 +758,7 @@ class MonetaSdkMethods
             $this->errorMessageHumanConverted = $this->settings[$this->errorCode];
         }
         else {
-            $this->errorMessageHumanConverted = $this->settings['0'];
+            $this->errorMessageHumanConverted = $this->errorMessage;
             $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
         }
 
