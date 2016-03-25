@@ -1,5 +1,6 @@
 monetasdk_connection_type = "soap"
 monetasdk_use_x509 = "0"
+monetasdk_x509_pem_file = ""
 monetasdk_demo_mode = "0"
 monetasdk_test_mode = "0"
 monetasdk_debug_mode = "0"

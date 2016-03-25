@@ -47,7 +47,7 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
      * @param $password
      * @param $isDebug
      */
-	function __construct($jsonConnectionUrl, $username, $password, $isDebug)
+	function __construct($jsonConnectionUrl, $username, $password, $cert = null, $isDebug = false)
 	{
 		$this->jsonConnectionUrl	= $jsonConnectionUrl;
 		$this->username				= $username;

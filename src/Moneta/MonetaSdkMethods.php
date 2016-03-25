@@ -89,6 +89,11 @@ class MonetaSdkMethods
 	{
 		if (!$this->monetaService) {
 			$this->monetaConnectionType = $this->getSettingValue('monetasdk_connection_type');
+            $cert       = $this->getSettingValue('monetasdk_use_x509') ? $this->getSettingValue('monetasdk_x509_pem_file') : "";
+            if ($cert && !file_exists($cert)) {
+                $this->setSettingValue('monetasdk_use_x509', false);
+            }
+
 			if ($this->monetaConnectionType == 'soap') {
 				$wsdl 		= $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
 				if ($this->getSettingValue('monetasdk_use_x509')) {
@@ -99,11 +104,11 @@ class MonetaSdkMethods
 				$password	= $this->getSettingValue('monetasdk_account_password');
 				$options 	= null;
 				$isDebug	= $this->getSettingValue('monetasdk_debug_mode');
+
 				// connect to moneta wsdl
-				$this->monetaService = new MonetaSdkSoapConnector($wsdl, $username, $password, $options, $isDebug);
+				$this->monetaService = new MonetaSdkSoapConnector($wsdl, $username, $password, $cert, $options, $isDebug);
 			}
 			else if ($this->monetaConnectionType == 'json') {
-				// TODO: send all json request param
                 $jsonConnectionUrl       = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
                 if ($this->getSettingValue('monetasdk_use_x509')) {
                     $jsonConnectionUrl  .= $this->getSettingValue('monetasdk_x509_port') ? ":".$this->getSettingValue('monetasdk_x509_port') : "";
@@ -112,8 +117,9 @@ class MonetaSdkMethods
                 $username	= $this->getSettingValue('monetasdk_account_username');
                 $password	= $this->getSettingValue('monetasdk_account_password');
                 $isDebug	= $this->getSettingValue('monetasdk_debug_mode');
+
                 // connect to moneta json service
-                $this->monetaService = new MonetaSdkJsonConnector($jsonConnectionUrl, $username, $password, $isDebug);
+                $this->monetaService = new MonetaSdkJsonConnector($jsonConnectionUrl, $username, $password, $cert, $isDebug);
 			}
 			else {
                 $this->error = true;

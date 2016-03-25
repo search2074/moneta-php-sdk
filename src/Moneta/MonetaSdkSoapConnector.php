@@ -24,22 +24,31 @@ class MonetaSdkSoapConnector extends MonetaWebServiceConnector
 	private $isDebug;
 
 
-	function __construct($wsdl, $username, $password, $options = null, $isDebug = false)
+	function __construct($wsdl, $username, $password, $cert = null, $options = null, $isDebug = false)
 	{
 		$this->isDebug = $isDebug;
 
-		// Отключаем кэширование в режиме отладки
-		ini_set("soap.wsdl_cache_enabled", !$isDebug);
+		if ($isDebug) {
+            ini_set("soap.wsdl_cache_enabled", "0");
+        }
+        else {
+            ini_set("soap.wsdl_cache_ttl", "86400");
+        }
 
-		// время жизни кэша
-		if (!$isDebug)
-			ini_set("soap.wsdl_cache_ttl", "86400");
+		if ($options === null) {
+            $options = array();
+        }
 
-		if ($options === null)
-			$options = array();
+		if ($cert && file_exists($cert)) {
+			$options['local_cert'] 		= $cert;
+		}
 
 		parent::__construct($wsdl, $options);
-		$this->inputHeaders[] = $this->createSecurityHeader($username, $password);
+
+		if (!$cert || ($cert && !file_exists($cert))) {
+			$this->inputHeaders[] = $this->createSecurityHeader($username, $password);
+		}
+
 	}
 
 
@@ -70,6 +79,7 @@ class MonetaSdkSoapConnector extends MonetaWebServiceConnector
 		$usernameToken = new \SoapVar($tmp, SOAP_ENC_OBJECT, null, $sns, 'wsse:UsernameToken', $sns);
 
 		$secHeaderValue = new \SoapVar($usernameToken, SOAP_ENC_OBJECT, NULL, $sns, 'wsse:Security', $sns);
+
 		return new \SoapHeader($sns, 'Security', $secHeaderValue, true);
 	}
 
