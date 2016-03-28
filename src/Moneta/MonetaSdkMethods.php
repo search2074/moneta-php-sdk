@@ -189,6 +189,7 @@ class MonetaSdkMethods
         return $transactionId;
     }
 
+
     /**
      * @param $accountId
      * @return int
@@ -307,7 +308,6 @@ class MonetaSdkMethods
     public function sdkMonetaCreateUser($firstName, $lastName, $email, $gender)
     {
         $unitId = false;
-
         try
         {
             if (!$firstName || !$lastName || !preg_match('/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,9}$/i', $email)) {
@@ -356,6 +356,7 @@ class MonetaSdkMethods
      */
     public function sdkMonetaUpdateUser($unitId, $firstName, $lastName, $email, $gender)
     {
+        $result = false;
         try
         {
             if (!$firstName || !$lastName || !preg_match('/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,9}$/i', $email)) {
@@ -380,7 +381,6 @@ class MonetaSdkMethods
         }
         catch (Exception $e)
         {
-            $result = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateUser: ' . print_r($e, true));
         }
@@ -396,6 +396,7 @@ class MonetaSdkMethods
      */
     public function sdkMonetaUpdateUserSecret($unitId, $secret)
     {
+        $result = false;
         try
         {
             if (!$secret) {
@@ -414,7 +415,6 @@ class MonetaSdkMethods
         }
         catch (Exception $e)
         {
-            $result = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaUpdateUserSecret: ' . print_r($e, true));
         }
@@ -431,6 +431,7 @@ class MonetaSdkMethods
      */
     public function sdkMonetaCreateAccount($unitId, $paymentPassword, $alias)
     {
+        $accountId = false;
         try
         {
             $monetaAccount = new \Moneta\Types\CreateAccountRequest();
@@ -441,17 +442,14 @@ class MonetaSdkMethods
             if ($this->getSettingValue('monetasdk_prototype_user_account_id')) {
                 $monetaAccount->prototypeAccountId = $this->getSettingValue('monetasdk_prototype_user_account_id');
             }
-
             $accountId = $this->monetaService->CreateAccount($monetaAccount);
             if (!$accountId) {
                 throw new MonetaSdkException(self::EXCEPTION_MONETA_METHOD . 'sdkMonetaCreateAccount');
             }
-
             $handleCreateAccount = MonetaSdkUtils::handleEvent('CreateAccountResult', array('unitId' => $unitId, 'accountId' => $accountId, 'paymentPassword' => $paymentPassword, 'alias' => $alias));
         }
         catch (Exception $e)
         {
-            $accountId = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateAccount: ' . print_r($e, true));
         }
@@ -468,8 +466,9 @@ class MonetaSdkMethods
      * @return array|bool|mixed|null|object
      * @throws MonetaSdkException
      */
-    public function sdkMonetaTransfer($fromAccountId, $fromAccountPaymentPassword, $toAccountId, $amount, $description = '')
+    public function sdkMonetaTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $description = '')
     {
+        $result = false;
         try
         {
             if ($amount <= 0) {
@@ -477,6 +476,11 @@ class MonetaSdkMethods
             }
 
             $amount = number_format($amount, 2, '.', '');
+
+            if (!$fromAccountPaymentPassword) {
+                $secret = $this->sdkGetSecretFromAccountProfile();
+                $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
+            }
 
             $monetaTransfer = new \Moneta\Types\TransferRequest();
             $monetaTransfer->payer              = $fromAccountId;
@@ -493,7 +497,6 @@ class MonetaSdkMethods
         }
         catch (Exception $e)
         {
-            $result = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaTransfer: ' . print_r($e, true));
         }
@@ -512,6 +515,7 @@ class MonetaSdkMethods
      */
     public function sdkMonetaHistory($accountId, $dateFrom, $dateTo, $itemsPerPage = 20, $pageNumber = 1)
     {
+        $history = false;
         try
         {
             $filter = new \Moneta\Types\FindOperationsListRequestFilter();
@@ -536,7 +540,6 @@ class MonetaSdkMethods
         }
         catch (Exception $e)
         {
-            $history = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaHistory: ' . print_r($e, true));
         }

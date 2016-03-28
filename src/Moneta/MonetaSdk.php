@@ -244,7 +244,7 @@ class MonetaSdk extends MonetaSdkMethods
      * @return MonetaSdkResult
      * @throws MonetaSdkException
      */
-    public function processEncyptPayPassword($payPassword)
+    public function processEncryptPayPassword($payPassword)
     {
         $this->calledMethods[] = __FUNCTION__;
 
