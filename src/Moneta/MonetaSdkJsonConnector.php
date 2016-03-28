@@ -31,6 +31,11 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
     /**
      * @var
      */
+    private $cert;
+
+    /**
+     * @var
+     */
 	private $isDebug;
 
 
@@ -53,6 +58,7 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 		$this->username				= $username;
 		$this->password				= $password;
 		$this->isDebug				= $isDebug;
+        $this->cert				    = $cert;
 	}
 
     /**
@@ -109,7 +115,14 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
 
         $bodyData = array("{$method}Request" => $inputData);
 
-        $requestData = array("Envelope" => array("Header" => array("Security" => array("UsernameToken" => array("Username" => $this->username, "Password" => $this->password))), "Body" => $bodyData));
+        // authorization data
+        if (!$this->cert) {
+            $requestData = array("Envelope" => array("Header" => array("Security" => array("UsernameToken" => array("Username" => $this->username, "Password" => $this->password))), "Body" => $bodyData));
+        }
+        else {
+            $requestData = array("Envelope" => array("Body" => $bodyData));
+        }
+
         if ($this->isDebug) {
             MonetaSdkUtils::addToLog("jsonCall request:\n".print_r($requestData, true));
         }
@@ -121,6 +134,10 @@ class MonetaSdkJsonConnector extends MonetaWebServiceConnector
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $requestData);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        if ($this->cert) {
+            curl_setopt($ch, CURLOPT_SSLCERT, $this->cert);
+        }
+
 		$response = curl_exec($ch);
         curl_close($ch);
 

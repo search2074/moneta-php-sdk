@@ -7,11 +7,17 @@ use Moneta;
 
 class MonetaSdkUtils
 {
+    /**
+     * Paths
+     */
 	const INI_FILES_PATH 				= "/../../config/";
 	const VIEW_FILES_PATH 				= "/../../view/";
     const EVENTS_FILES_PATH 			= "/../../events/";
 	const LOGS_FILES_PATH 				= "/../../logs/";
 
+    /**
+     * ini Files
+     */
 	const INI_FILE_BASIC_SETTINGS 		= "basic_settings.ini";
 	const INI_FILE_DATA_STORAGE 		= "data_storage.ini";
 	const INI_FILE_PAYMENT_SYSTEMS 		= "payment_systems.ini";
@@ -20,11 +26,18 @@ class MonetaSdkUtils
 	const INI_FILE_ERROR_TEXTS			= "error_texts.ini";
     const INI_FILE_ADDITIONAL_FIELDS	= "additional_field_names.ini";
 
+    /**
+     * Exception messages text
+     */
 	const EXCEPTION_NO_INI_FILE 		= ".ini file not found: ";
 	const EXCEPTION_NO_VIEW_FILE 		= "view file not found: ";
 	const EXCEPTION_NO_VALUE_IN_ARRAY 	= "no vallue in array: ";
 
-
+    /**
+     * @param null $configPath
+     * @return array
+     * @throws MonetaSdkException
+     */
 	public static function getAllSettings($configPath = null)
 	{
 		$iniFilesPath = self::INI_FILES_PATH;
@@ -43,7 +56,31 @@ class MonetaSdkUtils
 		return array_merge($arBasicSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields);
 	}
 
+    /**
+     * @param $attributes
+     * @param $key
+     * @return bool
+     */
+    public static function getValueFromMonetaAttributes($attributes, $key)
+    {
+        $result = false;
+        if (is_array($attributes) && count($attributes)) {
+            foreach ($attributes AS $attribute) {
+                if (isset($attribute['key']) && isset($attribute['value']) && $attribute['key'] == $key) {
+                    $result = $attribute['value'];
+                    break;
+                }
+            }
+        }
+        return $result;
+    }
 
+    /**
+     * @param $value
+     * @param $array
+     * @return mixed
+     * @throws MonetaSdkException
+     */
 	public static function getValueFromArray($value, $array)
 	{
 		if (!isset($array[$value])) {
@@ -53,7 +90,12 @@ class MonetaSdkUtils
 		return $array[$value];
 	}
 
-
+    /**
+     * @param $viewName
+     * @param $data
+     * @param null $externalPath
+     * @return bool|string
+     */
 	public static function requireView($viewName, $data, $externalPath = null)
 	{
         $result = false;
@@ -74,7 +116,12 @@ class MonetaSdkUtils
         return $result;
 	}
 
-
+    /**
+     * @param $eventName
+     * @param $data
+     * @param null $externalPath
+     * @return bool
+     */
     public static function handleEvent($eventName, $data, $externalPath = null)
     {
         $result = false;
@@ -93,7 +140,11 @@ class MonetaSdkUtils
         return $result;
     }
 
-
+    /**
+     * @param $fileName
+     * @return array
+     * @throws MonetaSdkException
+     */
 	private static function getSettingsFromIniFile($fileName)
 	{
 		if (!file_exists($fileName)) {
@@ -103,7 +154,10 @@ class MonetaSdkUtils
 		return parse_ini_file($fileName, true);
 	}
 
-
+    /**
+     * @param $cookieName
+     * @return null
+     */
 	public static function getSdkCookie($cookieName)
 	{
 		$result = null;
@@ -117,7 +171,11 @@ class MonetaSdkUtils
 		return $result;
 	}
 
-
+    /**
+     * @param $cookieName
+     * @param $cookieValue
+     * @return bool
+     */
 	public static function setSdkCookie($cookieName, $cookieValue)
 	{
 		if (!$cookieName) {
@@ -142,7 +200,10 @@ class MonetaSdkUtils
 		return true;
 	}
 
-
+    /**
+     * @param $message
+     * @return int|null|void
+     */
 	public static function addToLog($message)
 	{
 		$errorHandlerFileName = __DIR__ . self::LOGS_FILES_PATH . date("Ymd").".txt";
@@ -159,5 +220,31 @@ class MonetaSdkUtils
 
         return $result;
 	}
+
+    /**
+     * @param $string
+     * @param $secret
+     * @return string
+     */
+    public static function encrypt($string, $secret)
+    {
+        $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
+        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $encrypted_string = mcrypt_encrypt(MCRYPT_BLOWFISH, $secret, utf8_encode($string), MCRYPT_MODE_ECB, $iv);
+        return $encrypted_string;
+    }
+
+    /**
+     * @param $string
+     * @param $secret
+     * @return string
+     */
+    public static function decrypt($string, $secret)
+    {
+        $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
+        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $decrypted_string = mcrypt_decrypt(MCRYPT_BLOWFISH, $secret, $string, MCRYPT_MODE_ECB, $iv);
+        return $decrypted_string;
+    }
 
 }

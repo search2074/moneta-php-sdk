@@ -223,6 +223,59 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
+     * @param $secret
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function processPutSecretToAccountProfile($secret)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $this->data = array('result' => $this->sdkPutSecretToAccountProfile($secret));
+
+        return $this->getEmptyResult();
+    }
+
+    /**
+     * @param $payPassword
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function processEncyptPayPassword($payPassword)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $secret = $this->sdkGetSecretFromAccountProfile();
+        $this->data = array('result' => MonetaSdkUtils::encrypt($payPassword, $secret));
+
+        return $this->getEmptyResult();
+    }
+
+    /**
+     * @param $payPassword
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function processDecryptPayPassword($payPassword)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $secret = $this->sdkGetSecretFromAccountProfile();
+        $this->data = array('result' => MonetaSdkUtils::decrypt($payPassword, $secret));
+
+        return $this->getEmptyResult();
+    }
+
+    /**
      * TODO
      * Switch and execute an action
      */
@@ -305,10 +358,12 @@ class MonetaSdk extends MonetaSdkMethods
                         if ($unitId) {
                             $processResultData = array_merge($processResultData, $unitData);
                             $accountPaymentPassword = rand(10000, 99999);
+                            $secret = $this->sdkGetSecretFromAccountProfile();
+                            $accountEncryptedPaymentPassword = encrypt($accountPaymentPassword, $secret);
                             $accountId = $this->sdkMonetaCreateAccount($unitId, $accountPaymentPassword, $email);
                             if ($accountId) {
                                 $accountData = array('unitId' => $unitId, 'accountId' => $accountId, 'accountPaymentPassword' => $accountPaymentPassword,
-                                                     'accountNotificationEmail' => $email);
+                                                     'accountEncryptedPaymentPassword' => $accountEncryptedPaymentPassword, 'accountNotificationEmail' => $email);
 
                                 $processResultData = array_merge($processResultData, $accountData);
                             }
@@ -408,12 +463,16 @@ class MonetaSdk extends MonetaSdkMethods
 	}
 
     /**
+     * @param null $data
      * @return MonetaSdkResult
      */
-    private function getEmptyResult()
+    private function getEmptyResult($data = null)
     {
         $sdkResult = new MonetaSdkResult();
         $sdkResult->error = false;
+        if ($data) {
+            $sdkResult->data = $data;
+        }
 
         return $sdkResult;
     }

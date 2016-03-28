@@ -197,7 +197,6 @@ class MonetaSdkMethods
     public function sdkMonetaGetAccountBalance($accountId)
     {
         $balance = 0;
-
         try
         {
             $monetaAccount = $this->monetaService->FindAccountById($accountId);
@@ -233,6 +232,65 @@ class MonetaSdkMethods
         {
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaGetOperationDetailsById: ' . print_r($e, true));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $secret
+     * @return array|bool|mixed|null|object
+     * @throws MonetaSdkException
+     */
+    public function sdkPutSecretToAccountProfile($secret)
+    {
+        $result = false;
+        try {
+            $unitId = null;
+            $profileResult = $this->monetaFindProfileInfoByAccountId($this->getSettingValue('monetasdk_account_id'));
+            if (isset($profileResult->data)) {
+                $data = $profileResult->data;
+                if (isset($data['profile']['attribute'])) {
+                    $attributes = $data['profile']['attribute'];
+                    $unitId = MonetaSdkUtils::getValueFromMonetaAttributes($attributes, 'unitid');
+                }
+            }
+            if (!$unitId) {
+                throw new MonetaSdkException(self::EXCEPTION_MONETA_METHOD . 'sdkPutSecretToAccountProfile');
+            }
+
+            $result = $this->sdkMonetaUpdateUserSecret($unitId, $secret);
+        }
+        catch (Exception $e)
+        {
+            $this->error = true;
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkPutSecretToAccountProfile: ' . print_r($e, true));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     * @throws MonetaSdkException
+     */
+    public function sdkGetSecretFromAccountProfile()
+    {
+        $result = false;
+        try {
+            $profileResult = $this->monetaFindProfileInfoByAccountId($this->getSettingValue('monetasdk_account_id'));
+            if (isset($profileResult->data)) {
+                $data = $profileResult->data;
+                if (isset($data['profile']['attribute'])) {
+                    $attributes = $data['profile']['attribute'];
+                    $result = MonetaSdkUtils::getValueFromMonetaAttributes($attributes, 'customfield:secret');
+                }
+            }
+        }
+        catch (Exception $e)
+        {
+            $this->error = true;
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'monetaFindProfileInfoByAccountId: ' . print_r($e, true));
         }
 
         return $result;
@@ -313,7 +371,7 @@ class MonetaSdkMethods
             $profile->addAttribute($this->pvtMonetaCreateAttribute('email_for_notifications',   $email));
             $profile->addAttribute($this->pvtMonetaCreateAttribute('sex',                       $gender));
 
-            $monetaProfile = new \Moneta\Types\CreateProfileRequest();
+            $monetaProfile = new \Moneta\Types\EditProfileRequest();
             $monetaProfile->unitId = $unitId;
             $monetaProfile->profile = $profile;
 
@@ -325,6 +383,40 @@ class MonetaSdkMethods
             $result = false;
             $this->error = true;
             throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateUser: ' . print_r($e, true));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $unitId
+     * @param $secret
+     * @return bool
+     * @throws MonetaSdkException
+     */
+    public function sdkMonetaUpdateUserSecret($unitId, $secret)
+    {
+        try
+        {
+            if (!$secret) {
+                throw new MonetaSdkException(self::EXCEPTION_INCORRECT_INPUT_DATA . 'sdkMonetaUpdateUserSecret');
+            }
+
+            $profile = new \Moneta\Types\Profile();
+            $profile->addAttribute($this->pvtMonetaCreateAttribute('customfield:secret', $secret));
+
+            $monetaProfile = new \Moneta\Types\EditProfileRequest();
+            $monetaProfile->unitId = $unitId;
+            $monetaProfile->profile = $profile;
+
+            $this->monetaService->EditProfile($monetaProfile);
+            $result = true;
+        }
+        catch (Exception $e)
+        {
+            $result = false;
+            $this->error = true;
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaUpdateUserSecret: ' . print_r($e, true));
         }
 
         return $result;
