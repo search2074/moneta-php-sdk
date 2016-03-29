@@ -34,6 +34,12 @@ class MonetaSdkUtils
 	const EXCEPTION_NO_VALUE_IN_ARRAY 	= "no vallue in array: ";
 
     /**
+     * @var
+     */
+    public static $redirectArray;
+
+
+    /**
      * @param null $configPath
      * @return array
      * @throws MonetaSdkException
@@ -72,6 +78,7 @@ class MonetaSdkUtils
                 }
             }
         }
+
         return $result;
     }
 
@@ -168,6 +175,7 @@ class MonetaSdkUtils
 				$result = $cookieMntData[$cookieName];
 			}
 		}
+
 		return $result;
 	}
 
@@ -181,11 +189,10 @@ class MonetaSdkUtils
 		if (!$cookieName) {
 			return false;
 		}
-
 		if (!$cookieValue) {
 			$cookieValue = '';
 		}
-
+        self::$redirectArray[$cookieName] = $cookieValue;
 		$cookieMntData = null;
 		if (isset($_COOKIE['mnt_data']) && $_COOKIE['mnt_data']) {
 			$cookieMntSerializedData = $_COOKIE['mnt_data'];
@@ -195,6 +202,7 @@ class MonetaSdkUtils
 			$cookieMntData = array();
 		}
 		$cookieMntData[$cookieName] = $cookieValue;
+        $cookieMntData = array_merge($cookieMntData, self::$redirectArray);
 		setcookie('mnt_data', serialize($cookieMntData));
 
 		return true;
@@ -231,6 +239,7 @@ class MonetaSdkUtils
         $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
         $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
         $encrypted_string = mcrypt_encrypt(MCRYPT_BLOWFISH, $secret, utf8_encode($string), MCRYPT_MODE_ECB, $iv);
+
         return $encrypted_string;
     }
 
@@ -244,6 +253,7 @@ class MonetaSdkUtils
         $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
         $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
         $decrypted_string = mcrypt_decrypt(MCRYPT_BLOWFISH, $secret, $string, MCRYPT_MODE_ECB, $iv);
+
         return $decrypted_string;
     }
 
