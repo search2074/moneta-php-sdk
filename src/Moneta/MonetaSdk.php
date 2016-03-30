@@ -6,6 +6,11 @@ use Moneta;
 
 class MonetaSdk extends MonetaSdkMethods
 {
+    const STATUS_NEW = 'STATUS_NEW';
+
+    const STATUS_FINISHED = 'STATUS_FINISHED';
+
+
 	function __construct($configPath = null)
 	{
         $this->events = array();
@@ -90,6 +95,19 @@ class MonetaSdk extends MonetaSdkMethods
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
             $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
+
+            $notificationEmail = null;
+            if (isset($additionalData['additionalParameters_notificationEmail'])) {
+                $notificationEmail = $additionalData['additionalParameters_notificationEmail'];
+            }
+
+            $saveInvoiceData = array('invoiceId' => $transactionId, 'payer' => $payer, 'payee' => $payee, 'amount' => $amount,
+                                'orderId' => $orderId, 'paymentSystem' => $paymentSystem, 'invoiceStatus' => self::STATUS_NEW,
+                                'notificationEmail' => $notificationEmail, 'recursion' => 0);
+
+            $storage = $this->getStorageService();
+            $storage->createInvoice($saveInvoiceData);
+
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -112,6 +130,10 @@ class MonetaSdk extends MonetaSdkMethods
         }
 
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
+        if ($isRegular) {
+            $additionalFields[] = 'additionalParameters_notificationEmail';
+        }
+
         $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
 
         $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
@@ -318,6 +340,49 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
+     * processRecurentPaymentNotificationCronTask
+     */
+    public function processRecurentPaymentNotificationCronTask()
+    {
+        $storage = $this->getStorageService();
+        $invoices = $storage->getInvoicesForNotifications();
+        if (is_array($invoices) && count($invoices)) {
+            foreach($invoices AS $invoiceKey => $invoiceVal) {
+                if ($invoiceVal['notificationEmail']) {
+                    // notify item before make auto payment transaction
+
+                }
+
+                $invoiceVal['dateNotify'] = MonetaSdkUtils::getDateWithModification("+1 month -2 day");
+                $storage->updateInvoice($invoiceVal);
+            }
+        }
+    }
+
+    /**
+     * processRecurentPaymentTransferCronTask
+     */
+    public function processRecurentPaymentTransferCronTask()
+    {
+        $storage = $this->getStorageService();
+        $invoices = $storage->getInvoicesForRepay();
+        if (is_array($invoices) && count($invoices)) {
+            foreach($invoices AS $invoiceKey => $invoiceVal) {
+                // make a new regular transfer
+                $newRecursion =  intval(intval($invoiceVal['recursion']) + 1);
+                $storage->updateInvoice($invoiceVal);
+                $clientTransaction = $invoiceVal['invoiceId']."-R".$newRecursion;
+                $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
+                    $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
+
+            }
+
+            $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
+            $storage->updateInvoice($invoiceVal);
+        }
+    }
+
+    /**
      * Catch method and execute it
      *
      * @param $function
@@ -431,6 +496,9 @@ class MonetaSdk extends MonetaSdkMethods
         $description    = $this->getRequestedValue('MNT_DESCRIPTION', $formMethod);
         $additionalData = array();
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
+        if ($isRegular) {
+            $additionalFields[] = 'additionalParameters_notificationEmail';
+        }
         foreach ($additionalFields AS $field) {
             $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
         }
@@ -449,8 +517,11 @@ class MonetaSdk extends MonetaSdkMethods
         }
         if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
             $processResultData['orderId'] = $this->getRequestedValue('MNT_TRANSACTION_ID');
-            $processResultData['amount'] = $this->getRequestedValue('MNT_AMOUNT');
-            $processResultData['answer'] = 'SUCCESS';
+            $processResultData['amount']  = $this->getRequestedValue('MNT_AMOUNT');
+            $processResultData['answer']  = 'SUCCESS';
+            if ($this->getRequestedValue('paymenttoken')) {
+                $this->pvtUpdateInvoice();
+            }
             $this->render = 'SUCCESS';
             $handlePaySuccess = MonetaSdkUtils::handleEvent('MonetaPaySuccess', array('orderId' => $processResultData['orderId'], 'amount' => $processResultData['amount']), $this->getSettingValue('monetasdk_event_files_path'));
         }
@@ -458,6 +529,24 @@ class MonetaSdk extends MonetaSdkMethods
             $processResultData['answer'] = 'FAIL';
             $this->render = 'FAIL';
         }
+    }
+
+    /**
+     * Update invoice in storage
+     */
+    private function pvtUpdateInvoice()
+    {
+        $paymentToken   = $this->getRequestedValue('paymenttoken');
+        $invoiceId      = $this->getRequestedValue('MNT_OPERATION_ID');
+        $invoiceStatus  = self::STATUS_FINISHED;
+
+        $updateInvoiceData = array('invoiceId' => $invoiceId, 'invoiceStatus' => $invoiceStatus, 'tokenHash' => MonetaSdkUtils::getGUID(),
+            'paymentToken' => $paymentToken, 'dateNotify' => MonetaSdkUtils::getDateWithModification("+1 month -2 day"),
+            'dateTarget' => MonetaSdkUtils::getDateWithModification("+1 month"));
+
+        $storage = $this->getStorageService();
+        $storage->updateInvoice($updateInvoiceData);
+
     }
 
     /**

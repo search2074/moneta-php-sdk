@@ -24,6 +24,8 @@ class MonetaSdkMethods
 
     public $monetaService;
 
+    public $storageService;
+
     public $data;
 
     public $render;
@@ -731,7 +733,27 @@ class MonetaSdkMethods
         $data = array('error' => $this->error, 'errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted);
         $renderResult = MonetaSdkUtils::requireView('ErrorMessage', $data, $this->getSettingValue('monetasdk_view_files_path'));
         $this->render = $renderResult;
+
         return $renderResult;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getStorageService()
+    {
+        if (!$this->storageService) {
+
+            $storageSettings = array('monetasdk_storage_files_path' => $this->getSettingValue('monetasdk_storage_files_path'), 'monetasdk_storage_mysql_host' => $this->getSettingValue('monetasdk_storage_mysql_host'),
+                'monetasdk_storage_mysql_username' => $this->getSettingValue('monetasdk_storage_mysql_username'), 'monetasdk_storage_mysql_password' => $this->getSettingValue('monetasdk_storage_mysql_password'),
+                'monetasdk_storage_mysql_port' => $this->getSettingValue('monetasdk_storage_mysql_port'), 'monetasdk_storage_mysql_database' => $this->getSettingValue('monetasdk_storage_mysql_database'));
+
+            $storageServiceName = "\\Moneta\\MonetaSdk" . ucfirst($this->getSettingValue('monetasdk_storage_type')) . "Storage";
+            $storageServiceObject = new $storageServiceName($storageSettings);
+            $this->storageService = $storageServiceObject;
+        }
+
+        return $this->storageService;
     }
 
     /**

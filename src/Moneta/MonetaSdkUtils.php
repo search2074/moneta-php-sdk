@@ -257,4 +257,31 @@ class MonetaSdkUtils
         return $decrypted_string;
     }
 
+    /**
+     * @return string
+     */
+    public static function getGUID()
+    {
+        return md5(uniqid(rand(0, 99999)));
+    }
+
+    /**
+     * @param null $modification
+     * @return bool|string
+     */
+    public static function getDateWithModification($modification = null)
+    {
+        $result = null;
+        if (!$modification) {
+            $result = date(self::BX_SPECIFIC_DATETIME_FORMAT);
+        }
+        else {
+            $currentTs = strtotime(date(self::BX_SPECIFIC_DATETIME_FORMAT));
+            $modifiedTs = strtotime($modification, $currentTs);
+            $result = date(self::BX_SPECIFIC_DATETIME_FORMAT, $modifiedTs);
+        }
+
+        return $result;
+    }
+
 }
