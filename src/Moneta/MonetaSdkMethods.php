@@ -197,8 +197,8 @@ class MonetaSdkMethods
         $res = false;
         try
         {
-            $payment = new \Moneta\Types\MonetaPaymentRequest();
-            $payment->amount = doubleval($amount);
+            $payment = new \Moneta\Types\PaymentRequest();
+            $payment->amount = number_format($amount, 2, '.', '');;
 
             // откуда перечисляем
             $payment->payer = $fromAccountId;
@@ -213,13 +213,14 @@ class MonetaSdkMethods
             }
 
             // параметры при выводе не в монету
+            // при пополнениях отсутствует
             $attributeCounter = 0;
             $attributeCollection = array();
             if (count($attributes) > 0)
             {
                 foreach ($attributes ? $attributes : array() as $key => $value)
                 {
-                    $attributeCollection[$attributeCounter] = new \Moneta\Types\MonetaKeyValueAttribute();
+                    $attributeCollection[$attributeCounter] = new \Moneta\Types\KeyValueAttribute();
                     $attributeCollection[$attributeCounter]->key = $key;
                     $attributeCollection[$attributeCounter]->value = $value;
                     $attributeCounter++;

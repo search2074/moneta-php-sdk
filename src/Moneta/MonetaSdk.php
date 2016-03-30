@@ -70,7 +70,6 @@ class MonetaSdk extends MonetaSdkMethods
     public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
         $this->calledMethods[] = __FUNCTION__;
-
         // pre Execute
         if (!in_array('processInputData', $this->calledMethods)) {
             $this->processInputData('ForwardPaymentForm');
@@ -78,36 +77,32 @@ class MonetaSdk extends MonetaSdkMethods
                 return $this->getCurrentMethodResult();
             }
         }
-
         // Execute
         $viewName = 'PaymentFrom';
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
-
         $amount = number_format($amount, 2, '.', '');
+        if ($isRegular) {
+            $paymentSystem = 'plastic';
+        }
         $paymentSystem = $this->selectPaymentSystem($paymentSystem);
-
         $autoSubmit = false;
         $transactionId = 0;
-
         $paymentSystemParams = $this->getSettingValue('monetasdk_paysys_' . $paymentSystem);
         if (($additionalData && $paymentSystemParams['createInvoice']) || ($isRegular && $paymentSystem == 'plastic')) {
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
             $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
-
             $notificationEmail = null;
             if (isset($additionalData['additionalParameters_notificationEmail'])) {
                 $notificationEmail = $additionalData['additionalParameters_notificationEmail'];
             }
-
             $saveInvoiceData = array('invoiceId' => $transactionId, 'payer' => $payer, 'payee' => $payee, 'amount' => $amount,
                                 'orderId' => $orderId, 'paymentSystem' => $paymentSystem, 'invoiceStatus' => self::STATUS_NEW,
                                 'notificationEmail' => $notificationEmail, 'recursion' => 0);
 
             $storage = $this->getStorageService();
             $storage->createInvoice($saveInvoiceData);
-
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -116,26 +111,21 @@ class MonetaSdk extends MonetaSdkMethods
             $autoSubmit = true;
             $action .= '?operationId=' . $transactionId;
         }
-
         // для форвардинга формы
         if (!$additionalData && $paymentSystemParams['createInvoice'])
         {
             $action = "";
         }
-
         $signature = null;
         $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
         if ($monetaAccountCode && $monetaAccountCode != '') {
             $signature = md5( $this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $monetaAccountCode );
         }
-
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         if ($isRegular) {
             $additionalFields[] = 'additionalParameters_notificationEmail';
         }
-
         $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
-
         $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
             'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
             'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
@@ -350,11 +340,14 @@ class MonetaSdk extends MonetaSdkMethods
             foreach($invoices AS $invoiceKey => $invoiceVal) {
                 if ($invoiceVal['notificationEmail']) {
                     // notify item before make auto payment transaction
-
+                    $message = MonetaSdkUtils::requireView('RegularNotification', $invoiceVal, $this->getSettingValue('monetasdk_view_files_path'));
+                    $subject = '=?utf-8?B?'.base64_encode($this->getSettingValue('regular_payments_notification_subject')).'?=';
+                    $mailResult = mail($invoiceVal['notificationEmail'], $subject, $message, "From: " . $this->getSettingValue('regular_payments_notification_from_email') . "\r\nContent-type: text/plain; charset=utf-8");
                 }
 
                 $invoiceVal['dateNotify'] = MonetaSdkUtils::getDateWithModification("+1 month -2 day");
                 $storage->updateInvoice($invoiceVal);
+                usleep(500);
             }
         }
     }
