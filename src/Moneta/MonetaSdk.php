@@ -375,10 +375,9 @@ class MonetaSdk extends MonetaSdkMethods
                 $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
                     $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
 
+                $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
+                $storage->updateInvoice($invoiceVal);
             }
-
-            $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
-            $storage->updateInvoice($invoiceVal);
         }
     }
 

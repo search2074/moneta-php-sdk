@@ -192,6 +192,57 @@ class MonetaSdkMethods
     }
 
 
+    public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes, $description = null)
+    {
+        $res = false;
+        try
+        {
+            $payment = new \Moneta\Types\MonetaPaymentRequest();
+            $payment->amount = doubleval($amount);
+
+            // откуда перечисляем
+            $payment->payer = $fromAccountId;
+
+            // куда перечисляем
+            $payment->payee = $toAccountId;
+
+            // эта сумма снимается с плетельщика
+            $payment->isPayerAmount = true;
+            if ($description) {
+                $payment->description = $description;
+            }
+
+            // параметры при выводе не в монету
+            $attributeCounter = 0;
+            $attributeCollection = array();
+            if (count($attributes) > 0)
+            {
+                foreach ($attributes ? $attributes : array() as $key => $value)
+                {
+                    $attributeCollection[$attributeCounter] = new \Moneta\Types\MonetaKeyValueAttribute();
+                    $attributeCollection[$attributeCounter]->key = $key;
+                    $attributeCollection[$attributeCounter]->value = $value;
+                    $attributeCounter++;
+                }
+            }
+
+            $payment->operationInfo["attribute"] = $attributeCollection;
+
+            // наш код транзакции
+            if ($clientTransaction) {
+                $payment->clientTransaction = $clientTransaction;
+            }
+
+            $res = $this->monetaService->Payment($payment);
+        }
+        catch (Exception $e)
+        {
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkPutSecretToAccountProfile: ' . print_r($e, true));
+        }
+
+        return $res;
+    }
+
     /**
      * @param $accountId
      * @return int
