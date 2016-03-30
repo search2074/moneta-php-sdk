@@ -1,2 +1,3 @@
 regular_payments_notification_subject = ""
 regular_payments_notification_from_email = ""
+regular_payments_cancel_url = ""

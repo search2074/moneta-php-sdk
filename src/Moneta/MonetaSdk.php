@@ -10,6 +10,8 @@ class MonetaSdk extends MonetaSdkMethods
 
     const STATUS_FINISHED = 'STATUS_FINISHED';
 
+    const STATUS_CANCELED = 'STATUS_CANCELED';
+
 
 	function __construct($configPath = null)
 	{
@@ -320,6 +322,9 @@ class MonetaSdk extends MonetaSdkMethods
                     case 'ForwardAccountHistoryForm':
                         $processResultData = $this->processForwardAccountHistoryForm();
                         break;
+                    case 'CancelRegularPayment':
+                        $this->processCancelRegularPayment();
+                        break;
                 }
                 $this->events[] = $eventType;
             }
@@ -340,7 +345,8 @@ class MonetaSdk extends MonetaSdkMethods
             foreach($invoices AS $invoiceKey => $invoiceVal) {
                 if ($invoiceVal['notificationEmail']) {
                     // notify item before make auto payment transaction
-                    $message = MonetaSdkUtils::requireView('RegularNotification', $invoiceVal, $this->getSettingValue('monetasdk_view_files_path'));
+                    $renderData = array('invoice' => $invoiceVal, 'cancelUrl' => $this->getSettingValue('regular_payments_cancel_url'));
+                    $message = MonetaSdkUtils::requireView('RegularNotification', $renderData, $this->getSettingValue('monetasdk_view_files_path'));
                     $subject = '=?utf-8?B?'.base64_encode($this->getSettingValue('regular_payments_notification_subject')).'?=';
                     $mailResult = mail($invoiceVal['notificationEmail'], $subject, $message, "From: " . $this->getSettingValue('regular_payments_notification_from_email') . "\r\nContent-type: text/plain; charset=utf-8");
                 }
@@ -606,6 +612,24 @@ class MonetaSdk extends MonetaSdkMethods
         $this->render = MonetaSdkUtils::requireView('AccountHistoryForm', $processResultData, $this->getSettingValue('monetasdk_view_files_path'));
 
         return $processResultData;
+    }
+
+    /**
+     * processCancelRegularPayment
+     */
+    private function processCancelRegularPayment()
+    {
+        $dataMode   = $this->getRequestedValue('mode');
+        $dataHash   = $this->getRequestedValue('hash');
+        $dataEmail  = $this->getRequestedValue('email');
+        if ($dataMode == 'cancel' && $dataHash) {
+            $storage = $this->getStorageService();
+            $invoice = $storage->getInvoiceByHash($dataHash);
+            if ($invoice) {
+                $invoice['invoiceStatus'] = self::STATUS_CANCELED;
+                $storage->updateInvoice($invoice);
+            }
+        }
     }
 
     /**

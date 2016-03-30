@@ -745,25 +745,23 @@ class MonetaSdkMethods
     public function detectEventTypeFromVars()
     {
         $detectedEvent = false;
-
         if ($this->isFieldsSet(array('choosePaySysByType'))) {
             $detectedEvent = 'ForwardChoosePaymentSystemForm';
         }
-
         if ($this->isFieldsSet(array('moneta_sdk_first_name', 'moneta_sdk_last_name', 'moneta_sdk_email', 'moneta_sdk_gender'))) {
             $detectedEvent = 'ForwardCreateUserForm';
         }
-
         if ($this->isFieldsSet(array('moneta_sdk_account', 'moneta_sdk_date_from', 'moneta_sdk_date_to'))) {
             $detectedEvent = 'ForwardAccountHistoryForm';
         }
-
         if ($this->isFieldsSet(array('MNT_ID', 'MNT_TRANSACTION_ID', 'MNT_AMOUNT'))) {
             $detectedEvent = 'ForwardPaymentForm';
         }
-
         if ($this->isFieldsSet(array('MNT_ID', 'MNT_TRANSACTION_ID', 'MNT_OPERATION_ID', 'MNT_AMOUNT', 'MNT_CURRENCY_CODE', 'MNT_TEST_MODE', 'MNT_SIGNATURE'))) {
             $detectedEvent = 'MonetaSendCallBack';
+        }
+        if ($this->isFieldsSet(array('mode', 'hash', 'email'))) {
+            $detectedEvent = 'CancelRegularPayment';
         }
 
         return $detectedEvent;
@@ -774,7 +772,7 @@ class MonetaSdkMethods
      */
     public function getInternalEventNames()
     {
-        return array('ForwardAccountHistoryForm', 'ForwardCreateUserForm', 'ForwardChoosePaymentSystemForm', 'ForwardPaymentForm', 'MonetaSendCallBack');
+        return array('ForwardAccountHistoryForm', 'ForwardCreateUserForm', 'ForwardChoosePaymentSystemForm', 'ForwardPaymentForm', 'MonetaSendCallBack', 'CancelRegularPayment');
     }
 
     /**
