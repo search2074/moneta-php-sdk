@@ -69,18 +69,19 @@ class MonetaSdk extends MonetaSdkMethods
      * @param string $method
      * @return bool
      */
-    public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
+    public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $isIframe = false, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
         $this->calledMethods[] = __FUNCTION__;
         // pre Execute
         if (!in_array('processInputData', $this->calledMethods)) {
-            $this->processInputData('ForwardPaymentForm');
-            if (isset($this->data['event']) && $this->data['event'] == 'ForwardPaymentForm') {
+            $forwardProcessName = $isIframe ? 'ForwardPaymentFormIframe' : 'ForwardPaymentForm';
+            $this->processInputData($forwardProcessName);
+            if (isset($this->data['event']) && $this->data['event'] == $forwardProcessName) {
                 return $this->getCurrentMethodResult();
             }
         }
         // Execute
-        $viewName = 'PaymentFrom';
+        $viewName = $isIframe ? 'PaymentFromIframe' : 'PaymentFrom';
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
         $amount = number_format($amount, 2, '.', '');
@@ -108,7 +109,7 @@ class MonetaSdk extends MonetaSdkMethods
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
-        $action .= $this->getSettingValue('monetasdk_assistant_link');
+        $action .= $isIframe ? $this->getSettingValue('monetasdk_assistant_widget_link') : $this->getSettingValue('monetasdk_assistant_link');
         if ($transactionId) {
             $autoSubmit = true;
             $action .= '?operationId=' . $transactionId;
@@ -308,6 +309,9 @@ class MonetaSdk extends MonetaSdkMethods
                     case 'ForwardPaymentForm':
                         $this->processForwardPaymentForm();
                         break;
+                    case 'ForwardPaymentFormIframe':
+                        $this->processForwardPaymentForm();
+                        break;
                     case 'MonetaSendCallBack':
                         $this->processMonetaSendCallBack();
                         break;
@@ -489,6 +493,7 @@ class MonetaSdk extends MonetaSdkMethods
         $amount         = $this->getRequestedValue('MNT_AMOUNT', $formMethod);
         $paymentSystem  = $this->getRequestedValue('MNT_PAY_SYSTEM', $formMethod);
         $isRegular      = $this->getRequestedValue('MNT_IS_REGULAR', $formMethod);
+        $isIframe       = $this->getRequestedValue('MNT_IS_IFRAME', $formMethod);
         $method         = $this->getRequestedValue('MNT_FORM_METHOD', $formMethod);
         $currency       = $this->getRequestedValue('MNT_CURRENCY_CODE', $formMethod);
         $description    = $this->getRequestedValue('MNT_DESCRIPTION', $formMethod);
@@ -500,7 +505,7 @@ class MonetaSdk extends MonetaSdkMethods
         foreach ($additionalFields AS $field) {
             $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
         }
-        $this->showPaymentFrom($orderId, $amount, $currency, $description, $paymentSystem, $isRegular, $additionalData, $method);
+        $this->showPaymentFrom($orderId, $amount, $currency, $description, $isIframe, $paymentSystem, $isRegular, $additionalData, $method);
     }
 
     /**

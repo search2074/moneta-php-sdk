@@ -25,6 +25,7 @@ class MonetaSdkUtils
 	const INI_FILE_SUCCESS_FAIL_URLS 	= "success_fail_urls.ini";
 	const INI_FILE_ERROR_TEXTS			= "error_texts.ini";
     const INI_FILE_ADDITIONAL_FIELDS	= "additional_field_names.ini";
+    const INI_FILE_REGULAR_PAYMENTS	    = "regular_payments.ini";
 
     /**
      * Exception messages text
@@ -46,20 +47,18 @@ class MonetaSdkUtils
      */
 	public static function getAllSettings($configPath = null)
 	{
-		$iniFilesPath = self::INI_FILES_PATH;
-		if ($configPath) {
-			$iniFilesPath = $configPath;
-		}
+        $iniFilesPath = $configPath ? $configPath : __DIR__ . self::INI_FILES_PATH;
 
-		$arBasicSettings 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_BASIC_SETTINGS);
-		$arDataStorage 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_DATA_STORAGE);
-		$arPaymentSystems 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_PAYMENT_SYSTEMS);
-		$arPaymentUrls 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_PAYMENT_URLS);
-		$arSuccessFailUrls 	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_SUCCESS_FAIL_URLS);
-		$arErrorTexts 		= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_ERROR_TEXTS);
-        $arAdditionalFields	= self::getSettingsFromIniFile(__DIR__ . $iniFilesPath . self::INI_FILE_ADDITIONAL_FIELDS);
+		$arBasicSettings 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_BASIC_SETTINGS);
+		$arDataStorage 		= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_DATA_STORAGE);
+		$arPaymentSystems 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_PAYMENT_SYSTEMS);
+		$arPaymentUrls 		= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_PAYMENT_URLS);
+		$arSuccessFailUrls 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_SUCCESS_FAIL_URLS);
+		$arErrorTexts 		= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_ERROR_TEXTS);
+        $arAdditionalFields	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_ADDITIONAL_FIELDS);
+        $arRegularPayments	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_REGULAR_PAYMENTS);
 
-		return array_merge($arBasicSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields);
+		return array_merge($arBasicSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields, $arRegularPayments);
 	}
 
     /**

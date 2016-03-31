@@ -41,6 +41,7 @@
 
     <input type="hidden" name="MNT_PAY_SYSTEM" value="<?= $data['paySystem']; ?>">
     <input type="hidden" name="MNT_IS_REGULAR" value="<?= $data['isRegular']; ?>">
+    <input type="hidden" name="MNT_IS_IFRAME" value="<?= $data['isIframe']; ?>">
     <input type="hidden" name="MNT_FORM_METHOD" value="<?= $data['method']; ?>">
 
     <?php
