@@ -43,7 +43,7 @@ createInvoice = "0"
 [monetasdk_paysys_plastic]
 group = "card"
 title = "VISA, Master Card"
-accountId = "159"
+accountId = "0"
 unitId = "card"
 createInvoice = "0"
 
