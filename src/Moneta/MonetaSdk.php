@@ -61,13 +61,17 @@ class MonetaSdk extends MonetaSdkMethods
     /**
      * Create Assistant payment form
      *
-     * @param $paymentSystem
      * @param $orderId
      * @param $amount
      * @param string $currency
-     * @param $additionalData
+     * @param null $description
+     * @param bool|false $isIframe
+     * @param null $paymentSystem
+     * @param bool|false $isRegular
+     * @param null $additionalData
      * @param string $method
-     * @return bool
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
      */
     public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $isIframe = false, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
@@ -371,15 +375,17 @@ class MonetaSdk extends MonetaSdkMethods
         $invoices = $storage->getInvoicesForRepay();
         if (is_array($invoices) && count($invoices)) {
             foreach($invoices AS $invoiceKey => $invoiceVal) {
-                // make a new regular transfer
-                $newRecursion =  intval(intval($invoiceVal['recursion']) + 1);
-                $storage->updateInvoice($invoiceVal);
-                $clientTransaction = $invoiceVal['invoiceId']."-R".$newRecursion;
-                $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
-                    $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
+                if ($invoiceVal['paymentToken'] != 'request') {
+                    // make a new regular transfer
+                    $newRecursion = intval(intval($invoiceVal['recursion']) + 1);
+                    $storage->updateInvoice($invoiceVal);
+                    $clientTransaction = $invoiceVal['invoiceId'] . "-R" . $newRecursion;
+                    $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
+                        $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
 
-                $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
-                $storage->updateInvoice($invoiceVal);
+                    $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
+                    $storage->updateInvoice($invoiceVal);
+                }
             }
         }
     }

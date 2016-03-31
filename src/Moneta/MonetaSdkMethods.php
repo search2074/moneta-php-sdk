@@ -216,7 +216,7 @@ class MonetaSdkMethods
             // при пополнениях отсутствует
             $attributeCounter = 0;
             $attributeCollection = array();
-            if (count($attributes) > 0)
+            if (is_array($attributes) && count($attributes))
             {
                 foreach ($attributes ? $attributes : array() as $key => $value)
                 {
