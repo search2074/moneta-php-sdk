@@ -25,8 +25,8 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
     {
         if (!$this->fileHandler) {
             $this->fileName     = ($storageSettings['monetasdk_storage_files_path']) ? $storageSettings['monetasdk_storage_files_path'] . self::DATA_NAME : __DIR__ . self::DATA_PATH . self::DATA_NAME;
-            $this->fileHandler  = fopen($this->fileName, "w");
-            if (!$this->fileHandler) {
+            $this->fileHandler  = fopen($this->fileName, "a");
+            if (!$this->fileHandler || !is_resource($this->fileHandler)) {
                 throw new MonetaSdkException(self::EXCEPTION_NO_FILE . 'MonetaSdkFilesStorage');
             }
         }
@@ -37,7 +37,7 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
      */
     public function __destruct()
     {
-        if ($this->fileHandler) {
+        if ($this->fileHandler && is_resource($this->fileHandler)) {
             fflush($this->fileHandler);
             flock($this->fileHandler, LOCK_UN);
             fclose($this->fileHandler);

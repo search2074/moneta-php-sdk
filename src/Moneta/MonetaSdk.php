@@ -72,6 +72,7 @@ class MonetaSdk extends MonetaSdkMethods
     public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $isIframe = false, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
         $this->calledMethods[] = __FUNCTION__;
+        $isIframe = $isRegular ? false : $isIframe;
         // pre Execute
         if (!in_array('processInputData', $this->calledMethods)) {
             $forwardProcessName = $isIframe ? 'ForwardPaymentFormIframe' : 'ForwardPaymentForm';
@@ -85,27 +86,26 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
         $amount = number_format($amount, 2, '.', '');
-        if ($isRegular) {
-            $paymentSystem = 'plastic';
-        }
-        $paymentSystem = $this->selectPaymentSystem($paymentSystem);
+        $paymentSystem = $isRegular ? 'plastic' : $this->selectPaymentSystem($paymentSystem);
         $autoSubmit = false;
         $transactionId = 0;
         $paymentSystemParams = $this->getSettingValue('monetasdk_paysys_' . $paymentSystem);
-        if (($additionalData && $paymentSystemParams['createInvoice']) || ($isRegular && $paymentSystem == 'plastic')) {
+        if (($additionalData && ($paymentSystemParams['createInvoice'] || isset($additionalData['additionalParameters_ownerLogin'])))) {
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
             $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
-            $notificationEmail = null;
-            if (isset($additionalData['additionalParameters_notificationEmail'])) {
-                $notificationEmail = $additionalData['additionalParameters_notificationEmail'];
-            }
-            $saveInvoiceData = array('invoiceId' => $transactionId, 'payer' => $payer, 'payee' => $payee, 'amount' => $amount,
-                                'orderId' => $orderId, 'paymentSystem' => $paymentSystem, 'invoiceStatus' => self::STATUS_NEW,
-                                'notificationEmail' => $notificationEmail, 'recursion' => 0);
+            if ($isRegular) {
+                $notificationEmail = null;
+                if (isset($additionalData['additionalParameters_ownerLogin'])) {
+                    $notificationEmail = $additionalData['additionalParameters_ownerLogin'];
+                }
+                $saveInvoiceData = array('invoiceId' => $transactionId, 'payer' => $payer, 'payee' => $payee, 'amount' => $amount,
+                    'orderId' => $orderId, 'paymentSystem' => $paymentSystem, 'invoiceStatus' => self::STATUS_NEW,
+                    'notificationEmail' => $notificationEmail, 'recursion' => 0);
 
-            $storage = $this->getStorageService();
-            $storage->createInvoice($saveInvoiceData);
+                $storage = $this->getStorageService();
+                $storage->createInvoice($saveInvoiceData);
+            }
         }
 
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
@@ -115,7 +115,7 @@ class MonetaSdk extends MonetaSdkMethods
             $action .= '?operationId=' . $transactionId;
         }
         // для форвардинга формы
-        if (!$additionalData && $paymentSystemParams['createInvoice'])
+        if ((!$additionalData && $paymentSystemParams['createInvoice']) || ($isRegular && !$transactionId))
         {
             $action = "";
         }
@@ -126,7 +126,7 @@ class MonetaSdk extends MonetaSdkMethods
         }
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         if ($isRegular) {
-            $additionalFields[] = 'additionalParameters_notificationEmail';
+            $additionalFields[] = 'additionalParameters_ownerLogin';
         }
         $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
         $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
@@ -453,13 +453,7 @@ class MonetaSdk extends MonetaSdkMethods
         if (!$paymentSystem) {
             $paymentSystem = MonetaSdkUtils::getSdkCookie('paysys');
         }
-
-        if (!$paymentSystem) {
-            $paymentSystem = 'payanyway';
-        }
-        else {
-            $paymentSystem = str_replace('monetasdk_paysys_', '', $paymentSystem);
-        }
+        $paymentSystem = $paymentSystem ? str_replace('monetasdk_paysys_', '', $paymentSystem) : 'payanyway';
 
         return $paymentSystem;
     }
@@ -500,7 +494,7 @@ class MonetaSdk extends MonetaSdkMethods
         $additionalData = array();
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         if ($isRegular) {
-            $additionalFields[] = 'additionalParameters_notificationEmail';
+            $additionalFields[] = 'additionalParameters_ownerLogin';
         }
         foreach ($additionalFields AS $field) {
             $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
