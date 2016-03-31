@@ -76,6 +76,7 @@ class MonetaSdk extends MonetaSdkMethods
     public function showPaymentFrom($orderId, $amount, $currency = 'RUB', $description = null, $isIframe = false, $paymentSystem = null, $isRegular = false, $additionalData = null, $method = 'POST')
     {
         $this->calledMethods[] = __FUNCTION__;
+        $orderId = $orderId ? $orderId : str_replace('.', '', trim(microtime(true))).rand(1, 99);
         $isIframe = $isRegular ? false : $isIframe;
         // pre Execute
         if (!in_array('processInputData', $this->calledMethods)) {
