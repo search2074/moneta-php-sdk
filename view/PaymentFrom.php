@@ -48,10 +48,20 @@
         if (count($data['postData']) && is_array($data['postData'])) {
             foreach ($data['postData'] AS $varData) {
     ?>
-        <?= $autoSubmit ? '' : $varData['name']; ?> <input <?= $hideAdditionalField; ?> type="text" name="<?= $varData['var']; ?>" value="<?= $varData['value']; ?>"><br/>
+        <?= $autoSubmit ? '' : $varData['name']; ?> <input <?= ($hideAdditionalField) ? $hideAdditionalField : 'type="text"'; ?> name="<?= $varData['var']; ?>" value="<?= $varData['value']; ?>"><br/>
     <?php
             }
         }
+    ?>
+
+    <?php
+    if (count($data['forwardFields']) && is_array($data['forwardFields'])) {
+        foreach ($data['forwardFields'] AS $key => $val) {
+            ?>
+            <input type="hidden" name="<?= $key; ?>" value="<?= $val; ?>">
+            <?php
+        }
+    }
     ?>
 
     <?php

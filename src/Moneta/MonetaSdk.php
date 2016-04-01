@@ -133,14 +133,20 @@ class MonetaSdk extends MonetaSdkMethods
         if ($isRegular) {
             $additionalFields[] = 'additionalParameters_ownerLogin';
         }
+
         $postData = $this->createPostDataFromArray($this->addAdditionalData($additionalFields));
+        $sdkFields = array('MNT_ID', 'MNT_TRANSACTION_ID', 'MNT_CURRENCY_CODE', 'MNT_AMOUNT', 'MNT_DESCRIPTION', 'MNT_TEST_MODE', 'MNT_SIGNATURE', 'MNT_SUCCESS_URL',
+                    'MNT_FAIL_URL', 'followup', 'paymentSystem_accountId', 'paymentSystem_unitId', 'paymentSystem_limitIds', 'MNT_PAY_SYSTEM', 'MNT_IS_REGULAR',
+                    'MNT_IS_IFRAME', 'MNT_FORM_METHOD', 'submit', 'additionalParameters_ownerLogin');
+
+        $forwardFields = $this->pvtGetForwardDataArray($postData, $sdkFields);
         $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
             'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
             'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
             'signature' => $signature, 'successUrl' => $this->getSettingValue('monetasdk_success_url'),
             'failUrl' => $this->getSettingValue('monetasdk_fail_url'), 'accountId' => $this->getSettingValue('monetasdk_account_id'),
             'isRegular' => $isRegular ? '1' : null, 'isIframe' => $isIframe ? '1' : null, 'autoSubmit' => $autoSubmit ? '1' : null,
-            'operationId' => $transactionId, 'paymentSystemParams' => $paymentSystemParams);
+            'operationId' => $transactionId, 'paymentSystemParams' => $paymentSystemParams, 'forwardFields' => $forwardFields);
 
         $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
         return $this->getCurrentMethodResult();
@@ -671,6 +677,38 @@ class MonetaSdk extends MonetaSdkMethods
         else {
             $this->render = '<script type="text/javascript">window.location.replace("'.$url.'");</script>';
         }
+    }
+
+    /**
+     * @param $postData
+     * @param $sdkFields
+     * @return array
+     */
+    private function pvtGetForwardDataArray($postData, $sdkFields)
+    {
+        $forwardFields = array();
+        foreach ($postData AS $varData) {
+            $sdkFields[] = $varData['var'];
+        }
+        $sdkFields = array_unique($sdkFields);
+        $inputGetArray = $_GET;
+        if (is_array($inputGetArray) && count($inputGetArray)) {
+            foreach ($inputGetArray AS $key => $val) {
+                if (!in_array($key, $sdkFields)) {
+                    $forwardFields[$key] = $val;
+                }
+            }
+        }
+        $inputPostArray = $_POST;
+        if (is_array($inputPostArray) && count($inputPostArray)) {
+            foreach ($inputPostArray AS $key => $val) {
+                if (!in_array($key, $sdkFields)) {
+                    $forwardFields[$key] = $val;
+                }
+            }
+        }
+
+        return $forwardFields;
     }
 
 }
