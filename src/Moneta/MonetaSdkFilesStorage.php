@@ -8,6 +8,8 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
 {
     const EXCEPTION_NO_FILE = 'Data file is not available: ';
 
+    const EXCEPTION_NO_PERMISSIONS = 'Please set 0777 permissions to the "../integrationmonitoring/moneta-php-sdk/data" folder';
+
     const DATA_PATH = '/../../data/';
 
     const DATA_NAME = 'filedb.dat';
@@ -24,7 +26,11 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
     public function __construct($storageSettings)
     {
         if (!$this->fileHandler) {
-            $this->fileName     = ($storageSettings['monetasdk_storage_files_path']) ? $storageSettings['monetasdk_storage_files_path'] . self::DATA_NAME : __DIR__ . self::DATA_PATH . self::DATA_NAME;
+            $this->fileName     = ($storageSettings['monetasdk_storage_files_path']) ? $storageSettings['monetasdk_storage_files_path'] . self::DATA_NAME : __DIR__ . self::DATA_PATH;
+            if (!chmod($this->fileName, 0777)) {
+                throw new MonetaSdkException(self::EXCEPTION_NO_PERMISSIONS);
+            }
+            $this->fileName    .= self::DATA_NAME;
             $this->fileHandler  = fopen($this->fileName, "a");
             if (!$this->fileHandler || !is_resource($this->fileHandler)) {
                 throw new MonetaSdkException(self::EXCEPTION_NO_FILE . 'MonetaSdkFilesStorage');

@@ -139,8 +139,8 @@ class MonetaSdk extends MonetaSdkMethods
             'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
             'signature' => $signature, 'successUrl' => $this->getSettingValue('monetasdk_success_url'),
             'failUrl' => $this->getSettingValue('monetasdk_fail_url'), 'accountId' => $this->getSettingValue('monetasdk_account_id'),
-            'isRegular' => $isRegular ? '1' : null, 'autoSubmit' => $autoSubmit ? '1' : null, 'operationId' => $transactionId,
-            'paymentSystemParams' => $paymentSystemParams);
+            'isRegular' => $isRegular ? '1' : null, 'isIframe' => $isIframe ? '1' : null, 'autoSubmit' => $autoSubmit ? '1' : null,
+            'operationId' => $transactionId, 'paymentSystemParams' => $paymentSystemParams);
 
         $this->render = MonetaSdkUtils::requireView($viewName, $this->data, $this->getSettingValue('monetasdk_view_files_path'));
         return $this->getCurrentMethodResult();
@@ -304,6 +304,13 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
         $eventType = $this->detectEventTypeFromVars();
+
+        if ($this->getSettingValue('monetasdk_debug_mode')) {
+            MonetaSdkUtils::addToLog("processInputData event:\n" . $eventType);
+            MonetaSdkUtils::addToLog("processInputData GET:\n" . print_r($_GET, true));
+            MonetaSdkUtils::addToLog("processInputData POST:\n" . print_r($_POST, true));
+        }
+
         $processResultData = array();
         if ($eventType && (!$definedEventType || $definedEventType == $eventType)) {
             // handle event
@@ -338,6 +345,9 @@ class MonetaSdk extends MonetaSdkMethods
                 $this->events[] = $eventType;
             }
             $this->data = array("event" => $eventType, "processResultData" => $processResultData);
+            if ($this->getSettingValue('monetasdk_debug_mode')) {
+                MonetaSdkUtils::addToLog("processInputData data:\n" . print_r($this->data, true));
+            }
         }
 
         return $this->getCurrentMethodResult();

@@ -35,6 +35,13 @@ class MonetaSdkUtils
 	const EXCEPTION_NO_VALUE_IN_ARRAY 	= "no vallue in array: ";
 
     /**
+     * Date format
+     */
+    const DATETIME_FORMAT               = 'd-m-Y H:i:s';
+
+    const EXCEPTION_NO_PERMISSIONS = 'Please set 0777 permissions to the "logs" folder';
+
+    /**
      * @var
      */
     public static $redirectArray;
@@ -210,11 +217,16 @@ class MonetaSdkUtils
     /**
      * @param $message
      * @return int|null|void
+     * @throws MonetaSdkException
      */
 	public static function addToLog($message)
 	{
 		$errorHandlerFileName = __DIR__ . self::LOGS_FILES_PATH . date("Ymd").".txt";
         $result = null;
+        // TODO: Yii does not show error on file, use try - catch here
+        if (!chmod(__DIR__ . self::LOGS_FILES_PATH, 0777)) {
+            throw new MonetaSdkException(self::EXCEPTION_NO_PERMISSIONS);
+        }
         // save error message to log file
         $fp = fopen($errorHandlerFileName, "a");
         if ($fp) {
@@ -272,12 +284,12 @@ class MonetaSdkUtils
     {
         $result = null;
         if (!$modification) {
-            $result = date(self::BX_SPECIFIC_DATETIME_FORMAT);
+            $result = date(self::DATETIME_FORMAT);
         }
         else {
-            $currentTs = strtotime(date(self::BX_SPECIFIC_DATETIME_FORMAT));
+            $currentTs = strtotime(date(self::DATETIME_FORMAT));
             $modifiedTs = strtotime($modification, $currentTs);
-            $result = date(self::BX_SPECIFIC_DATETIME_FORMAT, $modifiedTs);
+            $result = date(self::DATETIME_FORMAT, $modifiedTs);
         }
 
         return $result;
