@@ -72,7 +72,9 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
         $invoiceId = $this->prepareValue($updateInvoiceData['invoiceId']);
         $arrPair = array();
         foreach ($updateInvoiceData AS $key => $val) {
-            $arrPair[] = "{$key} = '" . $this->prepareValue($val) . "'";
+            if ($key != 'invoiceId') {
+                $arrPair[] = "{$key} = '" . $this->prepareValue($val) . "'";
+            }
         }
         $strPair = implode(',', $arrPair);
         $sql = "UPDATE `" . self::TABLE_NAME_INVOICE . "` SET {$strPair} WHERE invoiceId = '{$invoiceId}'";

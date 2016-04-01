@@ -37,7 +37,7 @@ class MonetaSdkUtils
     /**
      * Date format
      */
-    const DATETIME_FORMAT               = 'd-m-Y H:i:s';
+    const DATETIME_FORMAT               = 'c';
 
     const EXCEPTION_NO_PERMISSIONS = 'Please set 0777 permissions to the "logs" folder';
 
