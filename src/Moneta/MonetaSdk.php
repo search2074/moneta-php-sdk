@@ -50,15 +50,6 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
-     * @return bool
-     */
-    public function processCleanChoosenPaymentSystem()
-    {
-        $this->data = MonetaSdkUtils::setSdkCookie('paysys', null);
-        return $this->getEmptyResult();
-    }
-
-    /**
      * Create Assistant payment form
      *
      * @param $orderId
@@ -249,6 +240,15 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
+     * @return bool
+     */
+    public function processCleanChoosenPaymentSystem()
+    {
+        $this->data = MonetaSdkUtils::setSdkCookie('paysys', null);
+        return $this->getEmptyResult();
+    }
+
+    /**
      * @param $secret
      * @return MonetaSdkResult
      * @throws MonetaSdkException
@@ -405,6 +405,23 @@ class MonetaSdk extends MonetaSdkMethods
                 }
             }
         }
+    }
+
+    /**
+     * @param $operationId
+     * @return MonetaSdkResult
+     * @throws MonetaSdkException
+     */
+    public function processPayRecurrent($operationId, $description = null)
+    {
+        $this->calledMethods[] = __FUNCTION__;
+
+        $this->cleanResultData();
+        $this->checkMonetaServiceConnection();
+
+        $this->data = $this->sdkMonetaPayRecurrent($operationId, $description);
+
+        return $this->getEmptyResult();
     }
 
     /**

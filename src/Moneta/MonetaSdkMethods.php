@@ -191,7 +191,16 @@ class MonetaSdkMethods
         return $transactionId;
     }
 
-
+    /**
+     * @param $fromAccountId
+     * @param $toAccountId
+     * @param $amount
+     * @param null $clientTransaction
+     * @param $attributes
+     * @param null $description
+     * @return bool
+     * @throws MonetaSdkException
+     */
     public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes, $description = null)
     {
         $res = false;
@@ -599,6 +608,61 @@ class MonetaSdkMethods
         }
 
         return $history;
+    }
+
+    /**
+     * @param $operationId
+     * @return bool
+     * @throws MonetaSdkException
+     */
+    public function sdkMonetaPayRecurrent($operationId, $description = null)
+    {
+        $result = false;
+        try
+        {
+            $amount = 0;
+            $getOperationToken = null;
+            $getOperationStatus = null;
+            $fromAccountId = null;
+
+            $getOperationResult = $this->monetaService->GetOperationDetailsById($operationId);
+            if (is_object($getOperationResult) && isset($getOperationResult->operation) && is_object($getOperationResult->operation)) {
+                // если у операции есть paymenttoken -> сохраним его в найденный счёт в колонку paymentToken
+                $getOperationResultAttributes = $getOperationResult->operation->attribute;
+                if (count($getOperationResultAttributes) && is_array($getOperationResultAttributes)) {
+                    foreach ($getOperationResultAttributes AS $oneAttribute) {
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'paymenttoken') {
+                            $getOperationToken = $oneAttribute->value;
+                        }
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'statusid') {
+                            $getOperationStatus = $oneAttribute->value;
+                        }
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceaccountid') {
+                            $fromAccountId = $oneAttribute->value;
+                        }
+                        if (!$description && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'description') {
+                            $description = $oneAttribute->value;
+                        }
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceamount') {
+                            $amount = $oneAttribute->value;
+                            if ($amount < 0) {
+                                $amount = (-1) * $amount;
+                            }
+                        }
+                    }
+                }
+            }
+            if ($getOperationToken != null && $getOperationStatus == 'SUCCEED') {
+                $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), array('PAYMENTTOKEN' => $getOperationToken), $description);
+            }
+        }
+        catch (Exception $e)
+        {
+            $this->error = true;
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaPayRecurrent: ' . print_r($e, true));
+        }
+
+        return $result;
     }
 
     /**
