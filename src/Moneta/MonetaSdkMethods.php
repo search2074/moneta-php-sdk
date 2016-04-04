@@ -637,7 +637,7 @@ class MonetaSdkMethods
                         if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'statusid') {
                             $getOperationStatus = $oneAttribute->value;
                         }
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceaccountid') {
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'targetaccountid') {
                             $fromAccountId = $oneAttribute->value;
                         }
                         if (!$description && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'description') {
