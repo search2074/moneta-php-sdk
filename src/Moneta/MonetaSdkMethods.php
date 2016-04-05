@@ -646,12 +646,8 @@ class MonetaSdkMethods
             if ($customParameters) {
                 parse_str($customParameters, $customParametersArray);
             }
-            if ($customParametersArray && is_array($customParametersArray) && count($customParametersArray) > 0) {
-                $attributes = array_merge(array('PAYMENTTOKEN' => $getOperationToken), $customParametersArray);
-            }
-            else {
-                $attributes = array('PAYMENTTOKEN' => $getOperationToken);
-            }
+            $baseAttributes = array('PAYMENTTOKEN' => $getOperationToken, 'MNT_DUPLICATE_ID' => $operationId);
+            $attributes = ($customParametersArray && is_array($customParametersArray) && count($customParametersArray) > 0) ? array_merge($baseAttributes, $customParametersArray) : $baseAttributes;
             if ($getOperationToken != null && $getOperationStatus == 'SUCCEED') {
                 $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), $attributes, $description);
             }
