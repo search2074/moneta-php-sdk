@@ -208,37 +208,23 @@ class MonetaSdkMethods
         {
             $payment = new \Moneta\Types\PaymentRequest();
             $payment->amount = number_format($amount, 2, '.', '');;
-
             // откуда перечисляем
             $payment->payer = $fromAccountId;
-
             // куда перечисляем
             $payment->payee = $toAccountId;
-
             // эта сумма снимается с плетельщика
             $payment->isPayerAmount = true;
             if ($description) {
                 $payment->description = $description;
             }
-
-            // параметры при выводе не в монету
-            // при пополнениях отсутствует
-            $attributeCounter = 0;
-            $attributeCollection = array();
-            if (is_array($attributes) && count($attributes))
-            {
-                foreach ($attributes ? $attributes : array() as $key => $value)
-                {
-                    $attributeCollection[$attributeCounter] = new \Moneta\Types\KeyValueAttribute();
-                    $attributeCollection[$attributeCounter]->key = $key;
-                    $attributeCollection[$attributeCounter]->value = $value;
-                    $attributeCounter++;
+            if (is_array($attributes) && count($attributes)) {
+                $operationInfo = new \Moneta\Types\OperationInfo();
+                foreach ($attributes AS $key => $value) {
+                    $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
             }
-
-            $payment->operationInfo["attribute"] = $attributeCollection;
-
-            // наш код транзакции
+            $payment->operationInfo = $operationInfo;
             if ($clientTransaction) {
                 $payment->clientTransaction = $clientTransaction;
             }
@@ -624,6 +610,7 @@ class MonetaSdkMethods
             $getOperationToken = null;
             $getOperationStatus = null;
             $fromAccountId = null;
+            $customParameters = null;
 
             $getOperationResult = $this->monetaService->GetOperationDetailsById($operationId);
             if (is_object($getOperationResult) && isset($getOperationResult->operation) && is_object($getOperationResult->operation)) {
@@ -649,11 +636,24 @@ class MonetaSdkMethods
                                 $amount = (-1) * $amount;
                             }
                         }
+                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'customurlparameters') {
+                            $customParameters = $oneAttribute->value;
+                        }
                     }
                 }
             }
+            $customParametersArray = null;
+            if ($customParameters) {
+                parse_str($customParameters, $customParametersArray);
+            }
+            if ($customParametersArray && is_array($customParametersArray) && count($customParametersArray) > 0) {
+                $attributes = array_merge(array('PAYMENTTOKEN' => $getOperationToken), $customParametersArray);
+            }
+            else {
+                $attributes = array('PAYMENTTOKEN' => $getOperationToken);
+            }
             if ($getOperationToken != null && $getOperationStatus == 'SUCCEED') {
-                $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), array('PAYMENTTOKEN' => $getOperationToken), $description);
+                $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), $attributes, $description);
             }
         }
         catch (Exception $e)
@@ -691,11 +691,9 @@ class MonetaSdkMethods
             $invoiceRequest->clientTransaction = $transactionId;
 
             $operationInfo = new \Moneta\Types\OperationInfo();
-
             if ($isRegular) {
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('PAYMENTTOKEN',        'request'));
             }
-
             if ($paymentSystem == 'post' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaindex',   $additionalData['additionalParameters_mailofrussiaSenderIndex']));
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaregion',  $additionalData['additionalParameters_mailofrussiaSenderRegion']));
@@ -708,7 +706,6 @@ class MonetaSdkMethods
 
             $invoiceRequest->operationInfo = $operationInfo;
             $invoiceResponse = $this->monetaService->Invoice($invoiceRequest);
-
             if ($this->monetaConnectionType == 'json' && isset($invoiceResponse['Envelope']['Body']['fault'])) {
                 $e = $invoiceResponse['Envelope']['Body']['fault'];
                 throw new MonetaSdkException(self::EXCEPTION_MONETA . 'pvtMonetaCreateInvoice: ' . print_r($e, true));
@@ -716,7 +713,6 @@ class MonetaSdkMethods
             else {
                 return $invoiceResponse;
             }
-
         }
         catch (Exception $e)
         {
