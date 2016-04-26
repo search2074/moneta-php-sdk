@@ -1,5 +1,5 @@
 [monetasdk_paysys_payanyway]
-group = "electric"
+group = "electronic"
 title = "PayAnyWay"
 accountId = "0"
 unitId = "0"
@@ -13,7 +13,7 @@ unitId = "587412"
 createInvoice = "0"
 
 [monetasdk_paysys_dengimail]
-group = "electric"
+group = "electronic"
 title = "Money@mail.ru"
 accountId = "0"
 unitId = "545234"
@@ -27,14 +27,14 @@ unitId = "609111"
 createInvoice = "0"
 
 [monetasdk_paysys_moneymail]
-group = "electric"
+group = "electronic"
 title = "MoneyMail"
 accountId = "29"
 unitId = "1038"
 createInvoice = "0"
 
 [monetasdk_paysys_moneta]
-group = "electric"
+group = "electronic"
 title = "Moneta.ru"
 accountId = "94"
 unitId = "1015"
@@ -55,21 +55,21 @@ unitId = "661709"
 createInvoice = "0"
 
 [monetasdk_paysys_walletone]
-group = "electric"
+group = "electronic"
 title = "Wallet One"
 accountId = "310212"
 unitId = "153"
 createInvoice = "0"
 
 [monetasdk_paysys_webmoney]
-group = "electric"
+group = "electronic"
 title = "WebMoney"
 accountId = "0"
 unitId = "1017"
 createInvoice = "0"
 
 [monetasdk_paysys_yandex]
-group = "electric"
+group = "electronic"
 title = "Yandex.Money"
 accountId = "16"
 unitId = "1020"
