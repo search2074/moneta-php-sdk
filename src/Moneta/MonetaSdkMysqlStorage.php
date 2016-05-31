@@ -29,13 +29,9 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
             }
 
             $this->mysqlConnector = $link;
-
             if (!$this->checkInvoiceTableIsExists()) {
                 $this->createInvoiceTable();
             }
-
-
-
         }
     }
 
