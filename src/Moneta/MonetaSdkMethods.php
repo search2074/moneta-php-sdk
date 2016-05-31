@@ -532,6 +532,71 @@ class MonetaSdkMethods
     }
 
     /**
+     * @param $fromAccountId
+     * @param null $fromAccountPaymentPassword
+     * @param $toAccountId
+     * @param $amount
+     * @param string $description
+     * @return array|bool|mixed|null|object
+     */
+    public function sdkMonetaVerifyTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $description = '')
+    {
+        $result = false;
+        try {
+            if ($amount <= 0) {
+                throw new MonetaSdkException(self::EXCEPTION_INCORRECT_AMOUNT . 'sdkMonetaTransfer');
+            }
+            $amount = number_format($amount, 2, '.', '');
+            if (!$fromAccountPaymentPassword) {
+                $secret = $this->sdkGetSecretFromAccountProfile();
+                $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
+            }
+            $amount = number_format($amount, 2, '.', '');
+            $monetaTransaction = new \Moneta\Types\TransactionRequest();
+            $monetaTransaction->payer              = $fromAccountId;
+            $monetaTransaction->paymentPassword    = $fromAccountPaymentPassword;
+            $monetaTransaction->payee              = $toAccountId;
+            $monetaTransaction->amount             = $amount;
+            $monetaTransaction->description        = $description;
+            $monetaTransaction->isPayerAmount      = true;
+
+            $transferResult = $this->monetaService->VerifyTransfer($monetaTransaction);
+            $result = json_decode(json_encode($transferResult, true));
+            $this->detectJsonException($transferResult);
+        }
+        catch (\Exception $e) {
+            $this->parseSoapException($e);
+        }
+
+        return $result;
+    }
+
+
+    public function sdkMonetaFindOperationsListByCTID($accountId, $clientTransaction, $itemsPerPage = 20, $pageNumber = 1)
+    {
+        $history = false;
+        try {
+            $pager = new \Moneta\Types\Pager();
+            $pager->pageNumber  = $pageNumber;
+            $pager->pageSize    = $itemsPerPage;
+
+            $request = new \Moneta\Types\FindOperationsListByCTIDRequest();
+            $request->accountId = $accountId;
+            $request->clientTransaction = $clientTransaction;
+            $request->pager = $pager;
+
+            $historyResult = $this->monetaService->FindOperationsListByCTID($request);
+            $history = json_decode(json_encode($historyResult, true));
+            $this->detectJsonException($historyResult);
+        }
+        catch (\Exception $e) {
+            $this->parseSoapException($e);
+        }
+
+        return $history;
+    }
+
+    /**
      * @param $accountId
      * @param $dateFrom
      * @param $dateTo
