@@ -733,6 +733,9 @@ class MonetaSdkMethods
             else if ($paymentSystem == 'euroset' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['additionalParameters_rapidaPhone']));
             }
+            else if ($paymentSystem == 'qiwi' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('qiwiuser',   $additionalData['additionalParameters_qiwiUser']));
+            }
 
             $invoiceRequest->operationInfo = $operationInfo;
             $invoiceResponse = $this->monetaService->Invoice($invoiceRequest);
@@ -757,6 +760,9 @@ class MonetaSdkMethods
                 break;
             case 'euroset':
                 $result = array('additionalParameters_rapidaPhone');
+                break;
+            case 'qiwi':
+                $result = array('additionalParameters_qiwiUser');
                 break;
         }
 

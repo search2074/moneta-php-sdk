@@ -80,7 +80,7 @@ group = "terminal"
 title = "QIWI Wallet"
 accountId = "15598507"
 unitId = "822360"
-createInvoice = "0"
+createInvoice = "1"
 
 [monetasdk_paysys_banktransfer]
 group = "bank"
