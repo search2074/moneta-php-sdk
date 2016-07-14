@@ -245,7 +245,7 @@ class MonetaSdk extends MonetaSdkMethods
     public function processCleanChoosenPaymentSystem()
     {
         $this->data = MonetaSdkUtils::setSdkCookie('paysys', null);
-        return $this->getEmptyResult();
+        return $this->getEmptyResult($this->data);
     }
 
     /**
@@ -261,8 +261,7 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $this->data = array('result' => $this->sdkPutSecretToAccountProfile($secret));
-
-        return $this->getEmptyResult();
+        return $this->getEmptyResult($this->data);
     }
 
     /**
@@ -278,9 +277,10 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $secret = $this->sdkGetSecretFromAccountProfile();
-        $this->data = array('result' => MonetaSdkUtils::encrypt($payPassword, $secret));
+        $secureCode = base64_encode(MonetaSdkUtils::encrypt($payPassword, $secret));
 
-        return $this->getEmptyResult();
+        $this->data = array('result' => $secureCode);
+        return $this->getEmptyResult($this->data);
     }
 
     /**
@@ -296,9 +296,9 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $secret = $this->sdkGetSecretFromAccountProfile();
-        $this->data = array('result' => MonetaSdkUtils::decrypt($payPassword, $secret));
+        $this->data = array('result' => MonetaSdkUtils::decrypt(base64_decode($payPassword), $secret));
 
-        return $this->getEmptyResult();
+        return $this->getEmptyResult($this->data);
     }
 
     /**
@@ -420,8 +420,7 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $this->data = $this->sdkMonetaPayRecurrent($operationId, $description);
-
-        return $this->getEmptyResult();
+        return $this->getEmptyResult($this->data);
     }
 
     /**
