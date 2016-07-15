@@ -734,7 +734,9 @@ class MonetaSdkMethods
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['additionalParameters_rapidaPhone']));
             }
             else if ($paymentSystem == 'qiwi' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('qiwiuser',   $additionalData['additionalParameters_qiwiUser']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('QIWIPHONE',    $additionalData['additionalParameters_qiwiUser']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('qiwicomment', $additionalData['additionalParameters_qiwiComment']));
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('ownerlogin',  $additionalData['additionalParameters_ownerLogin']));
             }
 
             if (isset($additionalData['AUTHORIZEONLY'])) {
