@@ -4,4 +4,5 @@ additionalParameters_mailofrussiaSenderAddress = "Адрес плательщи�
 additionalParameters_mailofrussiaSenderName = "ФИО плательщика"
 additionalParameters_rapidaPhone = "Номер телефона"
 additionalParameters_qiwiUser = "QIWI логин"
+additionalParameters_qiwiComment = "Комментарий"
 additionalParameters_ownerLogin = "E-Mail для уведомлений"
