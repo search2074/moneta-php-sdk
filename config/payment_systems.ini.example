@@ -65,7 +65,7 @@ createInvoice = "0"
 group = "electronic"
 title = "WebMoney"
 accountId = "0"
-unitId = "1017"
+unitId = "2851020"
 createInvoice = "0"
 
 [monetasdk_paysys_yandex]
