@@ -200,7 +200,7 @@ class MonetaSdkMethods
      * @return bool
      * @throws MonetaSdkException
      */
-    public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes, $description = null)
+    public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes = null, $description = null)
     {
         $res = false;
         try {
@@ -508,13 +508,16 @@ class MonetaSdkMethods
                 throw new MonetaSdkException(self::EXCEPTION_INCORRECT_AMOUNT . 'sdkMonetaTransfer');
             }
             $amount = number_format($amount, 2, '.', '');
-            if (!$fromAccountPaymentPassword) {
+            if (!$fromAccountPaymentPassword && $fromAccountPaymentPassword !== false) {
                 $secret = $this->sdkGetSecretFromAccountProfile();
                 $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
             }
             $monetaTransfer = new \Moneta\Types\TransferRequest();
             $monetaTransfer->payer              = $fromAccountId;
-            $monetaTransfer->paymentPassword    = $fromAccountPaymentPassword;
+            if ($fromAccountPaymentPassword) {
+                $monetaTransfer->paymentPassword = $fromAccountPaymentPassword;
+            }
+
             $monetaTransfer->payee              = $toAccountId;
             $monetaTransfer->amount             = $amount;
             $monetaTransfer->description        = $description;
@@ -536,29 +539,46 @@ class MonetaSdkMethods
      * @param null $fromAccountPaymentPassword
      * @param $toAccountId
      * @param $amount
-     * @param string $description
+     * @param null $clientTransaction
+     * @param null $attributes
+     * @param null $description
      * @return array|bool|mixed|null|object
      */
-    public function sdkMonetaVerifyTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $description = '')
+    public function sdkMonetaVerifyTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $clientTransaction = null, $attributes = null, $description = null)
     {
         $result = false;
         try {
             if ($amount <= 0) {
-                throw new MonetaSdkException(self::EXCEPTION_INCORRECT_AMOUNT . 'sdkMonetaTransfer');
+                throw new MonetaSdkException(self::EXCEPTION_INCORRECT_AMOUNT . 'sdkMonetaVerifyTransfer');
             }
             $amount = number_format($amount, 2, '.', '');
-            if (!$fromAccountPaymentPassword) {
+            if (!$fromAccountPaymentPassword && $fromAccountPaymentPassword !== false) {
                 $secret = $this->sdkGetSecretFromAccountProfile();
                 $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
             }
             $amount = number_format($amount, 2, '.', '');
             $monetaTransaction = new \Moneta\Types\TransactionRequest();
             $monetaTransaction->payer              = $fromAccountId;
-            $monetaTransaction->paymentPassword    = $fromAccountPaymentPassword;
+            if ($fromAccountPaymentPassword) {
+                $monetaTransaction->paymentPassword = $fromAccountPaymentPassword;
+            }
+
             $monetaTransaction->payee              = $toAccountId;
             $monetaTransaction->amount             = $amount;
             $monetaTransaction->description        = $description;
             $monetaTransaction->isPayerAmount      = true;
+
+            if (is_array($attributes) && count($attributes)) {
+                $operationInfo = new \Moneta\Types\OperationInfo();
+                foreach ($attributes AS $key => $value) {
+                    $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
+                }
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+            }
+            $monetaTransaction->operationInfo = $operationInfo;
+            if ($clientTransaction) {
+                $monetaTransaction->clientTransaction = $clientTransaction;
+            }
 
             $transferResult = $this->monetaService->VerifyTransfer($monetaTransaction);
             $result = json_decode(json_encode($transferResult, true));
@@ -571,6 +591,62 @@ class MonetaSdkMethods
         return $result;
     }
 
+    /**
+     * @param $fromAccountId
+     * @param null $fromAccountPaymentPassword
+     * @param $toAccountId
+     * @param $amount
+     * @param null $clientTransaction
+     * @param null $attributes
+     * @param null $description
+     * @return array|bool|mixed|null|object
+     */
+    public function sdkMonetaVerifyPayment($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $clientTransaction = null, $attributes = null, $description = null)
+    {
+        $result = false;
+        try {
+            if ($amount <= 0) {
+                throw new MonetaSdkException(self::EXCEPTION_INCORRECT_AMOUNT . 'sdkMonetaVerifyPayment');
+            }
+            $amount = number_format($amount, 2, '.', '');
+            if (!$fromAccountPaymentPassword && $fromAccountPaymentPassword !== false) {
+                $secret = $this->sdkGetSecretFromAccountProfile();
+                $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
+            }
+
+            $amount = number_format($amount, 2, '.', '');
+            $monetaTransaction = new \Moneta\Types\VerifyPaymentRequest();
+            $monetaTransaction->payer              = $fromAccountId;
+            if ($fromAccountPaymentPassword) {
+                $monetaTransaction->paymentPassword = $fromAccountPaymentPassword;
+            }
+
+            $monetaTransaction->payee              = $toAccountId;
+            $monetaTransaction->amount             = $amount;
+            $monetaTransaction->description        = $description;
+            $monetaTransaction->isPayerAmount      = true;
+            if (is_array($attributes) && count($attributes)) {
+                $operationInfo = new \Moneta\Types\OperationInfo();
+                foreach ($attributes AS $key => $value) {
+                    $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
+                }
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+            }
+            $monetaTransaction->operationInfo = $operationInfo;
+            if ($clientTransaction) {
+                $monetaTransaction->clientTransaction = $clientTransaction;
+            }
+
+            $transferResult = $this->monetaService->VerifyPayment($monetaTransaction);
+            $result = json_decode(json_encode($transferResult, true));
+            $this->detectJsonException($transferResult);
+        }
+        catch (\Exception $e) {
+            $this->parseSoapException($e);
+        }
+
+        return $result;
+    }
 
     public function sdkMonetaFindOperationsListByCTID($accountId, $clientTransaction, $itemsPerPage = 20, $pageNumber = 1)
     {
