@@ -86,10 +86,11 @@ class MonetaSdk extends MonetaSdkMethods
         $autoSubmit = false;
         $transactionId = 0;
         $paymentSystemParams = $this->getSettingValue('monetasdk_paysys_' . $paymentSystem);
-        if (($additionalData && ($paymentSystemParams['createInvoice'] || isset($additionalData['additionalParameters_ownerLogin'])))) {
+        if (!isset($additionalData['MNT_FORWARD_FORM']) && ($paymentSystemParams['createInvoice'] || isset($additionalData['additionalParameters_ownerLogin'])) ) {
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
             $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
+            $additionalData['MNT_FORWARD_FORM'] = true;
             if ($isRegular) {
                 $notificationEmail = null;
                 if (isset($additionalData['additionalParameters_ownerLogin'])) {
@@ -530,14 +531,17 @@ class MonetaSdk extends MonetaSdkMethods
         $method         = $this->getRequestedValue('MNT_FORM_METHOD', $formMethod);
         $currency       = $this->getRequestedValue('MNT_CURRENCY_CODE', $formMethod);
         $description    = $this->getRequestedValue('MNT_DESCRIPTION', $formMethod);
-        $additionalData = array();
+        $additionalData = array('MNT_FORWARD_FORM' => true);
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         if ($isRegular) {
             $additionalFields[] = 'additionalParameters_ownerLogin';
         }
         foreach ($additionalFields AS $field) {
-            $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
+            if ($this->getRequestedValue($field, $formMethod)) {
+                $additionalData[$field] = $this->getRequestedValue($field, $formMethod);
+            }
         }
+
         $this->showPaymentFrom($orderId, $amount, $currency, $description, $isIframe, $paymentSystem, $isRegular, $additionalData, $method);
     }
 

@@ -801,18 +801,18 @@ class MonetaSdkMethods
             }
 
             if ($paymentSystem == 'post' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaindex',   $additionalData['additionalParameters_mailofrussiaSenderIndex']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaregion',  $additionalData['additionalParameters_mailofrussiaSenderRegion']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaaddress', $additionalData['additionalParameters_mailofrussiaSenderAddress']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussianame',    $additionalData['additionalParameters_mailofrussiaSenderName']));
+                if ($additionalData['additionalParameters_mailofrussiaSenderIndex']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaindex',   $additionalData['additionalParameters_mailofrussiaSenderIndex']));
+                if ($additionalData['additionalParameters_mailofrussiaSenderRegion']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaregion',  $additionalData['additionalParameters_mailofrussiaSenderRegion']));
+                if ($additionalData['additionalParameters_mailofrussiaSenderAddress']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussiaaddress', $additionalData['additionalParameters_mailofrussiaSenderAddress']));
+                if ($additionalData['additionalParameters_mailofrussiaSenderName']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('mailofrussianame',    $additionalData['additionalParameters_mailofrussiaSenderName']));
             }
             else if ($paymentSystem == 'euroset' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['additionalParameters_rapidaPhone']));
+                if ($additionalData['additionalParameters_rapidaPhone']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('rapidamphone',   $additionalData['additionalParameters_rapidaPhone']));
             }
             else if ($paymentSystem == 'qiwi' && $additionalData && $this->checkAdditionalData($paymentSystem, $additionalData)) {
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('QIWIPHONE',    $additionalData['additionalParameters_qiwiUser']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('qiwicomment', $additionalData['additionalParameters_qiwiComment']));
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('ownerlogin',  $additionalData['additionalParameters_ownerLogin']));
+                if ($additionalData['additionalParameters_qiwiUser']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('QIWIPHONE',    $additionalData['additionalParameters_qiwiUser']));
+                if ($additionalData['additionalParameters_qiwiComment']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('qiwicomment', $additionalData['additionalParameters_qiwiComment']));
+                if ($additionalData['additionalParameters_ownerLogin']) $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('ownerlogin',  $additionalData['additionalParameters_ownerLogin']));
             }
 
             if (isset($additionalData['AUTHORIZEONLY'])) {
