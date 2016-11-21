@@ -277,8 +277,11 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
+        $secureCode = null;
         $secret = $this->sdkGetSecretFromAccountProfile();
-        $secureCode = base64_encode(MonetaSdkUtils::encrypt($payPassword, $secret));
+        if ($secret) {
+            $secureCode = base64_encode(MonetaSdkUtils::encrypt($payPassword, $secret));
+        }
 
         $this->data = array('result' => $secureCode);
         return $this->getEmptyResult($this->data);
@@ -296,9 +299,13 @@ class MonetaSdk extends MonetaSdkMethods
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
+        $secureCode = null;
         $secret = $this->sdkGetSecretFromAccountProfile();
-        $this->data = array('result' => MonetaSdkUtils::decrypt(base64_decode($payPassword), $secret));
+        if ($secret) {
+            $secureCode = MonetaSdkUtils::decrypt(base64_decode($payPassword), $secret);
+        }
 
+        $this->data = array('result' => $secureCode);
         return $this->getEmptyResult($this->data);
     }
 
