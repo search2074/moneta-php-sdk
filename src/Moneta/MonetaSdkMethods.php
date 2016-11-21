@@ -196,11 +196,11 @@ class MonetaSdkMethods
      * @param $amount
      * @param null $clientTransaction
      * @param $attributes
-     * @param null $description
+     * @param $description
      * @return bool
      * @throws MonetaSdkException
      */
-    public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes = null, $description = null)
+    public function sdkMonetaPayment($fromAccountId, $toAccountId, $amount, $clientTransaction = null, $attributes = null, $description = '')
     {
         $res = false;
         try {
@@ -493,14 +493,15 @@ class MonetaSdkMethods
 
     /**
      * @param $fromAccountId
-     * @param $fromAccountPaymentPassword
+     * @param null $fromAccountPaymentPassword
      * @param $toAccountId
      * @param $amount
      * @param string $description
+     * @param null $attributes
+     * @param null $clientTransaction
      * @return array|bool|mixed|null|object
-     * @throws MonetaSdkException
      */
-    public function sdkMonetaTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $description = '')
+    public function sdkMonetaTransfer($fromAccountId, $fromAccountPaymentPassword = null, $toAccountId, $amount, $description = '', $attributes = null, $clientTransaction = null)
     {
         $result = false;
         try {
@@ -522,6 +523,19 @@ class MonetaSdkMethods
             $monetaTransfer->amount             = $amount;
             $monetaTransfer->description        = $description;
             $monetaTransfer->isPayerAmount      = true;
+
+            if (is_array($attributes) && count($attributes)) {
+                $operationInfo = new \Moneta\Types\OperationInfo();
+                foreach ($attributes AS $key => $value) {
+                    $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
+                }
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+            }
+            $monetaTransfer->operationInfo = $operationInfo;
+
+            if ($clientTransaction) {
+                $monetaTransfer->clientTransaction = $clientTransaction;
+            }
 
             $transferResult = $this->monetaService->Transfer($monetaTransfer);
             $result = json_decode(json_encode($transferResult, true));
