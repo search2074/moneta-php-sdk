@@ -221,8 +221,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $payment->operationInfo = $operationInfo;
             }
-            $payment->operationInfo = $operationInfo;
             if ($clientTransaction) {
                 $payment->clientTransaction = $clientTransaction;
             }
@@ -530,8 +530,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $monetaTransfer->operationInfo = $operationInfo;
             }
-            $monetaTransfer->operationInfo = $operationInfo;
 
             if ($clientTransaction) {
                 $monetaTransfer->clientTransaction = $clientTransaction;
@@ -576,20 +576,18 @@ class MonetaSdkMethods
             if ($fromAccountPaymentPassword) {
                 $monetaTransaction->paymentPassword = $fromAccountPaymentPassword;
             }
-
             $monetaTransaction->payee              = $toAccountId;
             $monetaTransaction->amount             = $amount;
             $monetaTransaction->description        = $description;
             $monetaTransaction->isPayerAmount      = true;
-
             if (is_array($attributes) && count($attributes)) {
                 $operationInfo = new \Moneta\Types\OperationInfo();
                 foreach ($attributes AS $key => $value) {
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $monetaTransaction->operationInfo = $operationInfo;
             }
-            $monetaTransaction->operationInfo = $operationInfo;
             if ($clientTransaction) {
                 $monetaTransaction->clientTransaction = $clientTransaction;
             }
@@ -627,14 +625,12 @@ class MonetaSdkMethods
                 $secret = $this->sdkGetSecretFromAccountProfile();
                 $fromAccountPaymentPassword = MonetaSdkUtils::decrypt($this->getSettingValue('monetasdk_account_pay_password_enrypted'), $secret);
             }
-
             $amount = number_format($amount, 2, '.', '');
             $monetaTransaction = new \Moneta\Types\VerifyPaymentRequest();
             $monetaTransaction->payer              = $fromAccountId;
             if ($fromAccountPaymentPassword) {
                 $monetaTransaction->paymentPassword = $fromAccountPaymentPassword;
             }
-
             $monetaTransaction->payee              = $toAccountId;
             $monetaTransaction->amount             = $amount;
             $monetaTransaction->description        = $description;
@@ -645,8 +641,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $monetaTransaction->operationInfo = $operationInfo;
             }
-            $monetaTransaction->operationInfo = $operationInfo;
             if ($clientTransaction) {
                 $monetaTransaction->clientTransaction = $clientTransaction;
             }
