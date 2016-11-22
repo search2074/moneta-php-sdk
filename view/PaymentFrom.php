@@ -61,6 +61,13 @@
             <?php
         }
     }
+    if (count($data['additionalData']) && is_array($data['additionalData'])) {
+        foreach ($data['additionalData'] AS $key => $value) {
+            ?>
+            <input type="hidden" name="<?= $key; ?>" value="<?= $value; ?>">
+            <?php
+        }
+    }
     ?>
 
     <?php
