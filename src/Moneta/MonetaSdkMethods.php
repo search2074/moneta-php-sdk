@@ -184,7 +184,7 @@ class MonetaSdkMethods
             $transactionId = $createInvoiceResult['transaction'];
         }
         else {
-            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateInvoice: no transactionId received');
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateInvoice ' . print_r($createInvoiceResult, true));
         }
         MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
         return $transactionId;
