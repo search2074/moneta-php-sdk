@@ -86,7 +86,7 @@ class MonetaSdk extends MonetaSdkMethods
         $autoSubmit = false;
         $transactionId = 0;
         $paymentSystemParams = $this->getSettingValue('monetasdk_paysys_' . $paymentSystem);
-        if (!isset($additionalData['MNT_FORWARD_FORM']) && ($paymentSystemParams['createInvoice'] || isset($additionalData['additionalParameters_ownerLogin'])) ) {
+        if (!isset($additionalData['MNT_FORWARD_FORM']) && ($paymentSystemParams['createInvoice'] || isset($additionalData['additionalParameters_ownerLogin']) || $isRegular) ) {
             $payer = $paymentSystemParams['accountId'];
             $payee = $this->getSettingValue('monetasdk_account_id');
             $transactionId = $this->sdkMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
@@ -108,7 +108,7 @@ class MonetaSdk extends MonetaSdkMethods
         $action  = $this->getSettingValue('monetasdk_demo_mode') ? $this->getSettingValue('monetasdk_demo_url') : $this->getSettingValue('monetasdk_production_url');
         $action .= $isIframe ? $this->getSettingValue('monetasdk_assistant_widget_link') : $this->getSettingValue('monetasdk_assistant_link');
         if ($transactionId) {
-            $autoSubmit = true;
+            if (!$isRegular) { $autoSubmit = true; }
             $action .= '?operationId=' . $transactionId;
         }
         // для форвардинга формы
