@@ -184,7 +184,7 @@ class MonetaSdkMethods
             $transactionId = $createInvoiceResult['transaction'];
         }
         else {
-            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateInvoice ' . print_r($createInvoiceResult, true));
+            throw new MonetaSdkException(self::EXCEPTION_MONETA . 'sdkMonetaCreateInvoice');
         }
         MonetaSdkUtils::handleEvent('InvoiceCreated', array('transactionId' => $transactionId, 'amount' => $amount, 'paymentSystem' => $paymentSystem), $this->getSettingValue('monetasdk_event_files_path'));
         return $transactionId;
@@ -724,11 +724,10 @@ class MonetaSdkMethods
      * @return bool
      * @throws MonetaSdkException
      */
-    public function sdkMonetaPayRecurrent($operationId, $description = null)
+    public function sdkMonetaPayRecurrent($operationId, $description = null, $amount = 0)
     {
         $result = false;
         try {
-            $amount = 0;
             $getOperationToken = null;
             $getOperationStatus = null;
             $fromAccountId = null;
@@ -753,7 +752,7 @@ class MonetaSdkMethods
                         if (!$description && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'description') {
                             $description = $oneAttribute->value;
                         }
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceamount') {
+                        if (!$amount && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceamount') {
                             $amount = $oneAttribute->value;
                             if ($amount < 0) {
                                 $amount = (-1) * $amount;
@@ -830,6 +829,7 @@ class MonetaSdkMethods
             }
 
             $invoiceRequest->operationInfo = $operationInfo;
+
             $invoiceResponse = $this->monetaService->Invoice($invoiceRequest);
             $this->detectJsonException($invoiceResponse);
             return $invoiceResponse;

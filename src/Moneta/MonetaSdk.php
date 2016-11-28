@@ -416,18 +416,21 @@ class MonetaSdk extends MonetaSdkMethods
     }
 
     /**
+     * Process recurrent payment
+     *
      * @param $operationId
+     * @param null $description
+     * @param int $amount
      * @return MonetaSdkResult
-     * @throws MonetaSdkException
      */
-    public function processPayRecurrent($operationId, $description = null)
+    public function processPayRecurrent($operationId, $description = null, $amount = 0)
     {
         $this->calledMethods[] = __FUNCTION__;
 
         $this->cleanResultData();
         $this->checkMonetaServiceConnection();
 
-        $this->data = $this->sdkMonetaPayRecurrent($operationId, $description);
+        $this->data = $this->sdkMonetaPayRecurrent($operationId, $description, $amount);
         return $this->getEmptyResult($this->data);
     }
 
