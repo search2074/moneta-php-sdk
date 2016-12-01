@@ -131,9 +131,11 @@ class MonetaSdk extends MonetaSdkMethods
                     'MNT_FAIL_URL', 'followup', 'paymentSystem_accountId', 'paymentSystem_unitId', 'paymentSystem_limitIds', 'MNT_PAY_SYSTEM', 'MNT_IS_REGULAR',
                     'MNT_IS_IFRAME', 'MNT_FORM_METHOD', 'submit', 'additionalParameters_ownerLogin');
 
+        $postData = MonetaSdkUtils::placeAdditionalValues($postData, $additionalData);
+
         $forwardFields = $this->pvtGetForwardDataArray($postData, $sdkFields);
         $this->data = array('paySystem' => $paymentSystem, 'orderId' => $orderId, 'amount' => $amount, 'description' => $description,
-            'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName,
+            'currency' => $currency, 'action' => $action, 'method' => $method, 'formName' => $viewName, 'formId' => $viewName . time() . rand(1, 10),
             'postData' => $postData, 'additionalData' => $additionalData, 'testMode' => $this->getSettingValue('monetasdk_test_mode'),
             'signature' => $signature, 'successUrl' => $this->getSettingValue('monetasdk_success_url'),
             'failUrl' => $this->getSettingValue('monetasdk_fail_url'), 'accountId' => $this->getSettingValue('monetasdk_account_id'),
@@ -384,7 +386,7 @@ class MonetaSdk extends MonetaSdkMethods
                     $mailResult = mail($invoiceVal['notificationEmail'], $subject, $message, "From: " . $this->getSettingValue('regular_payments_notification_from_email') . "\r\nContent-type: text/plain; charset=utf-8");
                 }
 
-                $invoiceVal['dateNotify'] = MonetaSdkUtils::getDateWithModification("+1 month -2 day");
+                $invoiceVal['dateNotify'] = MonetaSdkUtils::getDateWithModification($this->getSettingValue('regular_payments_notify_period'));
                 $storage->updateInvoice($invoiceVal);
                 usleep(500);
             }
@@ -408,7 +410,7 @@ class MonetaSdk extends MonetaSdkMethods
                     $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
                         $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
 
-                    $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification("+1 month");
+                    $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification($this->getSettingValue('regular_payments_pay_period'));
                     $storage->updateInvoice($invoiceVal);
                 }
             }
@@ -591,8 +593,8 @@ class MonetaSdk extends MonetaSdkMethods
         $invoiceStatus  = self::STATUS_FINISHED;
 
         $updateInvoiceData = array('invoiceId' => $invoiceId, 'invoiceStatus' => $invoiceStatus, 'tokenHash' => MonetaSdkUtils::getGUID(),
-            'paymentToken' => $paymentToken, 'dateNotify' => MonetaSdkUtils::getDateWithModification("+1 month -2 day"),
-            'dateTarget' => MonetaSdkUtils::getDateWithModification("+1 month"));
+            'paymentToken' => $paymentToken, 'dateNotify' => MonetaSdkUtils::getDateWithModification($this->getSettingValue('regular_payments_notify_period')),
+            'dateTarget' => MonetaSdkUtils::getDateWithModification($this->getSettingValue('regular_payments_pay_period')));
 
         $storage = $this->getStorageService();
         $storage->updateInvoice($updateInvoiceData);

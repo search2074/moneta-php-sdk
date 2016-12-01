@@ -118,10 +118,9 @@ class MonetaSdkUtils
         else {
             $viewFileName = __DIR__ . self::VIEW_FILES_PATH . $viewName . '.php';
         }
-
 		if (file_exists($viewFileName)) {
             ob_start();
-			require_once($viewFileName);
+			require($viewFileName);
             $result = ob_get_contents();
             ob_end_clean();
 		}
@@ -144,9 +143,8 @@ class MonetaSdkUtils
         else {
             $eventFileName = __DIR__ . self::EVENTS_FILES_PATH . $eventName . '.php';
         }
-
         if (file_exists($eventFileName)) {
-            require_once($eventFileName);
+            require($eventFileName);
             $result = true;
         }
 
@@ -213,6 +211,26 @@ class MonetaSdkUtils
 
 		return true;
 	}
+
+	public static function placeAdditionalValues($postData, $additionalData) {
+	    $newPostData = array();
+        if (is_array($postData) && count($postData)) {
+            foreach ($postData AS $postDataItemKey => $postDataItemValue) {
+                if (is_array($postDataItemValue) && isset($postDataItemValue['var'])) {
+                    $keyName = str_replace('.', '_', $postDataItemValue['var']);
+                    if (isset($additionalData[$keyName])) {
+                        $postDataItemValue['value'] = $additionalData[$keyName];
+                    }
+                }
+                $newPostData[$postDataItemKey] = $postDataItemValue;
+            }
+        }
+        else {
+            $newPostData = $postData;
+        }
+
+        return $newPostData;
+    }
 
     /**
      * @param $message

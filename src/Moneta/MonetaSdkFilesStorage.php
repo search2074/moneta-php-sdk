@@ -8,7 +8,7 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
 {
     const EXCEPTION_NO_FILE = 'Data file is not available: ';
 
-    const EXCEPTION_NO_PERMISSIONS = 'Please set 0777 permissions to the "../integrationmonitoring/moneta-php-sdk/data" folder';
+    const EXCEPTION_NO_PERMISSIONS = 'Set 0777 permissions to the "../integrationmonitoring/moneta-php-sdk/data" folder';
 
     const DATA_PATH = '/../../data/';
 
@@ -183,7 +183,6 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
      */
     private function getSourceArray()
     {
-        fclose($this->fileHandler);
         $fileContent = file_get_contents($this->fileName);
         $sourceArray = null;
         if ($fileContent) {
@@ -192,7 +191,6 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
         if (!$sourceArray) {
             $sourceArray = array();
         }
-
         return $sourceArray;
     }
 

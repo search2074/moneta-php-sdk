@@ -46,8 +46,11 @@
     <?php
         if (count($data['postData']) && is_array($data['postData'])) {
             foreach ($data['postData'] AS $varData) {
+                if ($varData['value']) {
+                    $hideAdditionalField = 'type="hidden"';
+                }
     ?>
-        <?= $autoSubmit ? '' : $varData['name']; ?> <input <?= ($hideAdditionalField) ? $hideAdditionalField : 'type="text"'; ?> name="<?= $varData['var']; ?>" value="<?= $varData['value']; ?>"><br/>
+        <span style="<?= ($hideAdditionalField) ? 'display: none;' : ''; ?>"><?= $autoSubmit ? '' : $varData['name']; ?> </span><input <?= ($hideAdditionalField) ? $hideAdditionalField : 'type="text"'; ?> name="<?= $varData['var']; ?>" value="<?= $varData['value']; ?>"><?= ($hideAdditionalField) ? '' : '<br/>'; ?>
     <?php
             }
         }

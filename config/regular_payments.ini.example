@@ -1,3 +1,5 @@
 regular_payments_notification_subject = ""
 regular_payments_notification_from_email = ""
 regular_payments_cancel_url = ""
+regular_payments_notify_period = "+1 month -2 day"
+regular_payments_pay_period = "+1 month"
