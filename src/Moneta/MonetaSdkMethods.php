@@ -764,14 +764,23 @@ class MonetaSdkMethods
                     }
                 }
             }
+            else if ($this->getSettingValue('monetasdk_debug_mode')) {
+                MonetaSdkUtils::addToLog("sdkMonetaPayRecurrent:\nCannot get operation: {$operationId}");
+            }
             $customParametersArray = null;
             if ($customParameters) {
                 parse_str($customParameters, $customParametersArray);
             }
             $baseAttributes = array('PAYMENTTOKEN' => $getOperationToken, 'MNT_DUPLICATE_ID' => $operationId);
             $attributes = ($customParametersArray && is_array($customParametersArray) && count($customParametersArray) > 0) ? array_merge($baseAttributes, $customParametersArray) : $baseAttributes;
-            if ($getOperationToken != null && $getOperationStatus == 'SUCCEED') {
+            if ($getOperationToken != null && $getOperationToken != 'request' && $getOperationStatus == 'SUCCEED') {
                 $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), $attributes, $description);
+                if ($this->getSettingValue('monetasdk_debug_mode')) {
+                    MonetaSdkUtils::addToLog("sdkMonetaPayRecurrent:\nPayment request result:\n" . print_r($result, true));
+                }
+            }
+            else if ($this->getSettingValue('monetasdk_debug_mode')) {
+                MonetaSdkUtils::addToLog("sdkMonetaPayRecurrent:\nOperationStatus is not correct: {$getOperationStatus}, {$getOperationToken}");
             }
         }
         catch (\Exception $e) {
@@ -994,11 +1003,13 @@ class MonetaSdkMethods
      */
     public function parseSoapException($e)
     {
+        if ($this->getSettingValue('monetasdk_debug_mode')) {
+            MonetaSdkUtils::addToLog("Exception:\n" . print_r($e, true));
+        }
         $this->error = true;
         if (is_object($e)) {
             $e = (array) $e;
         }
-
         if ($this->monetaConnectionType == 'soap') {
             if (isset($e['detail']) && is_object($e['detail'])) {
                 $this->errorCode = $e['detail']->faultDetail;
@@ -1014,7 +1025,6 @@ class MonetaSdkMethods
                 $handleServiceUnavailableEvent = MonetaSdkUtils::handleEvent('ServiceUnavailable', array('errorCode' => $this->errorCode, 'errorMessage' => $this->errorMessage, 'errorMessageHumanConverted' => $this->errorMessageHumanConverted), $this->getSettingValue('monetasdk_event_files_path'));
             }
         }
-
     }
 
     /**

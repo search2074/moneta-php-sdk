@@ -402,13 +402,22 @@ class MonetaSdk extends MonetaSdkMethods
         $invoices = $storage->getInvoicesForRepay();
         if (is_array($invoices) && count($invoices)) {
             foreach($invoices AS $invoiceKey => $invoiceVal) {
+                if ($this->getSettingValue('monetasdk_debug_mode')) {
+                    MonetaSdkUtils::addToLog("processRecurentPaymentTransferCronTask:\ninvoiceKey: {$invoiceKey}, invoiceVal: {$invoiceVal}");
+                }
                 if ($invoiceVal['paymentToken'] != 'request') {
                     // make a new regular transfer
                     $newRecursion = intval(intval($invoiceVal['recursion']) + 1);
                     $storage->updateInvoice($invoiceVal);
                     $clientTransaction = $invoiceVal['invoiceId'] . "-R" . $newRecursion;
+
+                    // make payment
                     $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
                         $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
+
+                    if ($this->getSettingValue('monetasdk_debug_mode')) {
+                        MonetaSdkUtils::addToLog("processRecurentPaymentTransferCronTask payment request answer:\n" . print_r($paymentResult, true));
+                    }
 
                     $invoiceVal['dateTarget'] = MonetaSdkUtils::getDateWithModification($this->getSettingValue('regular_payments_pay_period'));
                     $storage->updateInvoice($invoiceVal);
@@ -433,6 +442,10 @@ class MonetaSdk extends MonetaSdkMethods
         $this->checkMonetaServiceConnection();
 
         $this->data = $this->sdkMonetaPayRecurrent($operationId, $description, $amount);
+        if (!$this->data) {
+            $this->error = true;
+        }
+
         return $this->getEmptyResult($this->data);
     }
 
