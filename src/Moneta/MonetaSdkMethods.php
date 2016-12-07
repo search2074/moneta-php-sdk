@@ -728,38 +728,42 @@ class MonetaSdkMethods
     {
         $result = false;
         try {
-            $getOperationToken = null;
-            $getOperationStatus = null;
-            $fromAccountId = null;
+            $getOperationToken = null; $getOperationStatus = null;
+            $fromAccountId = null; $toAccountId = null;
             $customParameters = null;
-
             $getOperationResult = $this->monetaService->GetOperationDetailsById($operationId);
+            if (is_object($getOperationResult)) {
+                $getOperationResult = json_decode(json_encode($getOperationResult, true));;
+            }
             $this->detectJsonException($getOperationResult);
-            if (!$this->error && is_object($getOperationResult) && isset($getOperationResult->operation) && is_object($getOperationResult->operation)) {
+            if (!$this->error && is_array($getOperationResult) && isset($getOperationResult['operation']) && is_array($getOperationResult['operation'])) {
                 // если у операции есть paymenttoken -> сохраним его в найденный счёт в колонку paymentToken
-                $getOperationResultAttributes = $getOperationResult->operation->attribute;
+                $getOperationResultAttributes = $getOperationResult['operation']['attribute'];
                 if (count($getOperationResultAttributes) && is_array($getOperationResultAttributes)) {
                     foreach ($getOperationResultAttributes AS $oneAttribute) {
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'paymenttoken') {
-                            $getOperationToken = $oneAttribute->value;
+                        if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'paymenttoken') {
+                            $getOperationToken = $oneAttribute['value'];
                         }
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'statusid') {
-                            $getOperationStatus = $oneAttribute->value;
+                        if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'statusid') {
+                            $getOperationStatus = $oneAttribute['value'];
                         }
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'targetaccountid') {
-                            $fromAccountId = $oneAttribute->value;
+                        if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'targetaccountid') {
+                            $toAccountId = $oneAttribute['value'];
                         }
-                        if (!$description && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'description') {
-                            $description = $oneAttribute->value;
+                        if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'sourceaccountid') {
+                            $fromAccountId = $oneAttribute['value'];
                         }
-                        if (!$amount && is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'sourceamount') {
-                            $amount = $oneAttribute->value;
+                        if (!$description && is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'description') {
+                            $description = $oneAttribute['value'];
+                        }
+                        if (!$amount && is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'sourceamount') {
+                            $amount = $oneAttribute['value'];
                             if ($amount < 0) {
                                 $amount = (-1) * $amount;
                             }
                         }
-                        if (is_object($oneAttribute) && isset($oneAttribute->key) && $oneAttribute->key == 'customurlparameters') {
-                            $customParameters = $oneAttribute->value;
+                        if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'customurlparameters') {
+                            $customParameters = $oneAttribute['value'];
                         }
                     }
                 }
@@ -774,9 +778,9 @@ class MonetaSdkMethods
             $baseAttributes = array('PAYMENTTOKEN' => $getOperationToken, 'MNT_DUPLICATE_ID' => $operationId);
             $attributes = ($customParametersArray && is_array($customParametersArray) && count($customParametersArray) > 0) ? array_merge($baseAttributes, $customParametersArray) : $baseAttributes;
             if ($getOperationToken != null && $getOperationToken != 'request' && $getOperationStatus == 'SUCCEED') {
-                $result = $this->sdkMonetaPayment($fromAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), $attributes, $description);
+                $result = $this->sdkMonetaPayment($toAccountId, $this->getSettingValue('monetasdk_account_id'), $amount, str_replace('.', '', trim(microtime(true))).rand(1, 99), $attributes, $description);
                 if ($this->getSettingValue('monetasdk_debug_mode')) {
-                    MonetaSdkUtils::addToLog("sdkMonetaPayRecurrent:\nPayment request result:\n" . print_r($result, true));
+                    MonetaSdkUtils::addToLog("sdkMonetaPayRecurrent:\nPayment from {$toAccountId} to {$this->getSettingValue('monetasdk_account_id')} request result:\n" . print_r($result, true));
                 }
             }
             else if ($this->getSettingValue('monetasdk_debug_mode')) {
