@@ -177,6 +177,9 @@ class MonetaSdkMethods
     {
         $transactionId = 0;
         $createInvoiceResult = $this->pvtMonetaCreateInvoice($payer, $payee, $amount, $orderId, $paymentSystem, $isRegular, $additionalData);
+        if ($this->getSettingValue('monetasdk_debug_mode')) {
+            MonetaSdkUtils::addToLog("sdkMonetaCreateInvoice:\n" . print_r($createInvoiceResult, true));
+        }
         if (is_object($createInvoiceResult)) {
             $transactionId = $createInvoiceResult->transaction;
         }
@@ -635,6 +638,7 @@ class MonetaSdkMethods
             $monetaTransaction->amount             = $amount;
             $monetaTransaction->description        = $description;
             $monetaTransaction->isPayerAmount      = true;
+            $monetaTransaction->version            = "VERSION_2";
             if (is_array($attributes) && count($attributes)) {
                 $operationInfo = new \Moneta\Types\OperationInfo();
                 foreach ($attributes AS $key => $value) {
@@ -839,6 +843,12 @@ class MonetaSdkMethods
 
             if (isset($additionalData['AUTHORIZEONLY'])) {
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('AUTHORIZEONLY', $additionalData['AUTHORIZEONLY']));
+            }
+            if (isset($additionalData['Version'])) {
+                $invoiceRequest->version = $additionalData['Version'];
+            }
+            if (isset($additionalData['version'])) {
+                $invoiceRequest->version = $additionalData['version'];
             }
 
             $invoiceRequest->operationInfo = $operationInfo;
@@ -1126,6 +1136,20 @@ class MonetaSdkMethods
     private function pvtMonetaCreateAttribute($key, $value)
     {
         $monetaAtribute = new \Moneta\Types\KeyValueAttribute();
+        $monetaAtribute->key = $key;
+        $monetaAtribute->value = $value;
+
+        return $monetaAtribute;
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     * @return Types\KeyValueApprovedAttribute
+     */
+    private function pvtMonetaCreateApprovedAttribute($key, $value)
+    {
+        $monetaAtribute = new \Moneta\Types\KeyValueApprovedAttribute();
         $monetaAtribute->key = $key;
         $monetaAtribute->value = $value;
 
