@@ -730,6 +730,14 @@ class MonetaSdkMethods
      */
     public function sdkMonetaPayRecurrent($operationId, $description = null, $amount = 0)
     {
+        $storage = $this->getStorageService();
+        $invoice = $storage->getInvoiceByOperationId($operationId);
+        if ($invoice) {
+            if ($invoice['invoiceStatus'] == self::STATUS_CANCELED) {
+                return false;
+            }
+        }
+
         $result = false;
         try {
             $getOperationToken = null; $getOperationStatus = null;

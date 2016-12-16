@@ -72,8 +72,12 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
                 $arrPair[] = "{$key} = '" . $this->prepareValue($val) . "'";
             }
         }
-        $strPair = implode(',', $arrPair);
-        $sql = "UPDATE `" . self::TABLE_NAME_INVOICE . "` SET {$strPair} WHERE invoiceId = '{$invoiceId}'";
+        $strPair = implode(', 
+', $arrPair);
+
+        $sql = "UPDATE `" . self::TABLE_NAME_INVOICE . "`  
+SET {$strPair}  
+WHERE invoiceId = '{$invoiceId}'";
         mysql_query($sql, $this->mysqlConnector);
     }
 
@@ -108,6 +112,28 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
         $result = false;
         $tokenHash = $this->prepareValue($tokenHash);
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE tokenHash = '{$tokenHash}'";
+        $retval = mysql_query($sql, $this->mysqlConnector);
+        if ($retval) {
+            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+                if ($row) {
+                    $result = $row;
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $operationId
+     * @return array|bool
+     */
+    public function getInvoiceByOperationId($operationId)
+    {
+        $result = false;
+        $operationId = $this->prepareValue($operationId);
+        $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE invoiceId = '{$operationId}'";
         $retval = mysql_query($sql, $this->mysqlConnector);
         if ($retval) {
             while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
