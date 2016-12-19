@@ -509,6 +509,17 @@ class MonetaSdk extends MonetaSdkMethods
         return $sdkResult;
     }
 
+    private function getErrorResult($errorMessage = null)
+    {
+        $sdkResult = new MonetaSdkResult();
+        $sdkResult->error = true;
+        $sdkResult->data = new MonetaSdkError();
+        $sdkResult->data->message = $errorMessage;
+        $sdkResult->render = $this->renderError();
+
+        return $sdkResult;
+    }
+
     /**
      * @param $paymentSystem
      * @return mixed|null|string

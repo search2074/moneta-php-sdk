@@ -733,8 +733,13 @@ class MonetaSdkMethods
         $storage = $this->getStorageService();
         $invoice = $storage->getInvoiceByOperationId($operationId);
         if ($invoice) {
-            if ($invoice['invoiceStatus'] == self::STATUS_CANCELED) {
-                return false;
+            if ($invoice['invoiceStatus'] == MonetaSdk::STATUS_CANCELED) {
+                $sdkResult = new MonetaSdkResult();
+                $sdkResult->error = true;
+                $sdkResult->data = new MonetaSdkError();
+                $sdkResult->data->message = "Регулярные платежи по операции {$operationId} были отменены пользователем";
+                $sdkResult->render = $this->renderError();
+                return $sdkResult;
             }
         }
 
