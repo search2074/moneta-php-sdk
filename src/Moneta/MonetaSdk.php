@@ -111,6 +111,10 @@ class MonetaSdk extends MonetaSdkMethods
             if (!$isRegular) { $autoSubmit = true; }
             $action .= '?operationId=' . $transactionId;
         }
+        // автосабмит
+        if (isset($additionalData['autoSubmit']) && $additionalData['autoSubmit']) {
+            $autoSubmit = true;
+        }
         // для форвардинга формы
         if ((!$additionalData && $paymentSystemParams['createInvoice']) || ($isRegular && !$transactionId))
         {
@@ -405,7 +409,7 @@ class MonetaSdk extends MonetaSdkMethods
                 if ($this->getSettingValue('monetasdk_debug_mode')) {
                     MonetaSdkUtils::addToLog("processRecurentPaymentTransferCronTask:\ninvoiceKey: {$invoiceKey}, invoiceVal: {$invoiceVal}");
                 }
-                if ($invoiceVal['paymentToken'] != 'request') {
+                if ($invoiceVal['paymentToken'] != 'request' && $invoiceVal['paymentToken'] != 'refused') {
                     // make a new regular transfer
                     $newRecursion = intval(intval($invoiceVal['recursion']) + 1);
                     $storage->updateInvoice($invoiceVal);

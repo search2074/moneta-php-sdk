@@ -241,9 +241,10 @@ class MonetaSdkUtils
 	{
 		$errorHandlerFileName = __DIR__ . self::LOGS_FILES_PATH . date("Ymd").".txt";
         $result = null;
-        // TODO: Yii does not show error on file, use try - catch here
-        if (!chmod(__DIR__ . self::LOGS_FILES_PATH, 0777)) {
-            throw new MonetaSdkException(self::EXCEPTION_NO_PERMISSIONS);
+        if (substr(sprintf('%o', fileperms(__DIR__ . self::LOGS_FILES_PATH)), -4) != '0777') {
+            if (!@chmod(__DIR__ . self::LOGS_FILES_PATH, 0777)) {
+                throw new MonetaSdkException(self::EXCEPTION_NO_PERMISSIONS);
+            }
         }
         // save error message to log file
         $fp = fopen($errorHandlerFileName, "a");
