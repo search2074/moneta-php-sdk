@@ -19,6 +19,7 @@ class MonetaSdkUtils
      * ini Files
      */
 	const INI_FILE_BASIC_SETTINGS 		= "basic_settings.ini";
+    const INI_FILE_KASSA_SETTINGS 		= "kassa_settings.ini";
 	const INI_FILE_DATA_STORAGE 		= "data_storage.ini";
 	const INI_FILE_PAYMENT_SYSTEMS 		= "payment_systems.ini";
 	const INI_FILE_PAYMENT_URLS 		= "payment_urls.ini";
@@ -57,6 +58,7 @@ class MonetaSdkUtils
         $iniFilesPath = $configPath ? $configPath : __DIR__ . self::INI_FILES_PATH;
 
 		$arBasicSettings 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_BASIC_SETTINGS);
+        $arKassaSettings 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_KASSA_SETTINGS);
 		$arDataStorage 		= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_DATA_STORAGE);
 		$arPaymentSystems 	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_PAYMENT_SYSTEMS);
 		$arPaymentUrls 		= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_PAYMENT_URLS);
@@ -65,7 +67,7 @@ class MonetaSdkUtils
         $arAdditionalFields	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_ADDITIONAL_FIELDS);
         $arRegularPayments	= self::getSettingsFromIniFile($iniFilesPath . self::INI_FILE_REGULAR_PAYMENTS);
 
-		return array_merge($arBasicSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields, $arRegularPayments);
+		return array_merge($arBasicSettings, $arKassaSettings, $arDataStorage, $arPaymentSystems, $arPaymentUrls, $arSuccessFailUrls, $arErrorTexts, $arAdditionalFields, $arRegularPayments);
 	}
 
     /**

@@ -1,0 +1,6 @@
+monetasdk_kassa_enabled = "1"
+monetasdk_kassa_type = "module"
+monetasdk_kassa_module_api_url = "http://demo-fn.avanpos.com/fn"
+monetasdk_kassa_module_uuid = ""
+monetasdk_kassa_module_login = ""
+monetasdk_kassa_module_password = ""
