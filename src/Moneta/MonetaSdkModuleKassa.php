@@ -110,11 +110,11 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
             MonetaSdkUtils::addToLog("sendHttpRequest Request:\n" . $method . ', ' . $this->kassaApiUrl . $url . "\n" . $headers_string . "\n" . $data . "\n");
         }
 
+        $response = false;
         try {
-            $response = file_get_contents($this->kassaApiUrl . $url, false, $context);
+            $response = @file_get_contents($this->kassaApiUrl . $url, false, $context);
         }
         catch (\Exception $e) {
-            $response = false;
             MonetaSdkUtils::addToLog("sendHttpRequest file_get_contents error:\n" . $e->getMessage());
         }
 
