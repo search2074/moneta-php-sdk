@@ -107,7 +107,7 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
         }
         $context  = stream_context_create($options);
         if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-            MonetaSdkUtils::addToLog("sendHttpRequest Request:\n" . $method . ', ' . $this->kassaApiUrl . $url . "\n" . $headers_string . "\n" . $data . "\n");
+            MonetaSdkUtils::addToLog("sendHttpRequest module Request:\n" . $method . ', ' . $this->kassaApiUrl . $url . "\n" . $headers_string . "\n" . $data . "\n");
         }
 
         $response = false;
@@ -115,17 +115,17 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
             $response = @file_get_contents($this->kassaApiUrl . $url, false, $context);
         }
         catch (\Exception $e) {
-            MonetaSdkUtils::addToLog("sendHttpRequest file_get_contents error:\n" . $e->getMessage());
+            MonetaSdkUtils::addToLog("sendHttpRequest module file_get_contents error:\n" . $e->getMessage());
         }
 
         if ($response === false) {
             if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-                MonetaSdkUtils::addToLog("sendHttpRequest Error:\n" . var_export(error_get_last(), true) . "\n");
+                MonetaSdkUtils::addToLog("sendHttpRequest module Error:\n" . var_export(error_get_last(), true) . "\n");
             }
             return false;
         }
         if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-            MonetaSdkUtils::addToLog("sendHttpRequest Response:\n" . var_export($response, true) . "\n");
+            MonetaSdkUtils::addToLog("sendHttpRequest module Response:\n" . var_export($response, true) . "\n");
         }
 
         return json_decode($response, true);

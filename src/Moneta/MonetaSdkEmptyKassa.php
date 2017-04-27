@@ -14,7 +14,7 @@ class MonetaSdkEmptyKassa implements MonetaSdkKassa
 
     public function checkKassaStatus() { }
 
-    public function sendDocument() { }
+    public function sendDocument($document) { }
 
     public function checkDocumentStatus() { }
 
