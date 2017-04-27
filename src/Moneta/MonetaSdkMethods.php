@@ -1043,7 +1043,8 @@ class MonetaSdkMethods
                     'monetasdk_kassa_module_login' => $this->getSettingValue('monetasdk_kassa_module_login'), 'monetasdk_kassa_module_password' => $this->getSettingValue('monetasdk_kassa_module_password'),
                     'monetasdk_kassa_atol_api_url' => $this->getSettingValue('monetasdk_kassa_atol_api_url'), 'monetasdk_kassa_atol_api_version' => $this->getSettingValue('monetasdk_kassa_atol_api_version'),
                     'monetasdk_kassa_atol_login' => $this->getSettingValue('monetasdk_kassa_atol_login'), 'monetasdk_kassa_atol_password' => $this->getSettingValue('monetasdk_kassa_atol_password'),
-                    'monetasdk_kassa_atol_group_code' => $this->getSettingValue('monetasdk_kassa_atol_group_code'),
+                    'monetasdk_kassa_atol_group_code' => $this->getSettingValue('monetasdk_kassa_atol_group_code'), 'monetasdk_kassa_inn' => $this->getSettingValue('monetasdk_kassa_inn'),
+                    'monetasdk_kassa_address' => $this->getSettingValue('monetasdk_kassa_address'),
 
                 );
 

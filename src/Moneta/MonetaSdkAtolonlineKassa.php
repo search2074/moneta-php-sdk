@@ -16,6 +16,10 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
 
     public $groupCode;
 
+    public $kassaInn;
+
+    public $kassaAddress;
+
     public $kassaStorageSettings;
 
     public function __construct($storageSettings)
@@ -26,6 +30,9 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $this->associatedLogin = $this->kassaStorageSettings['monetasdk_kassa_atol_login'];
         $this->associatedPassword = $this->kassaStorageSettings['monetasdk_kassa_atol_password'];
         $this->groupCode = $this->kassaStorageSettings['monetasdk_kassa_atol_group_code'];
+        $this->kassaInn = $this->kassaStorageSettings['monetasdk_kassa_inn'];
+        $this->kassaAddress = $this->kassaStorageSettings['monetasdk_kassa_address'];
+
     }
 
     public function __destruct()
@@ -62,18 +69,38 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $document = @json_decode($document, true);
 
         $d = new \DateTime($document['checkoutDateTime']);
-        $data = array('timestamp' => $d->format('d.m.Y H:i:s a'), 'external_id' => $document['docNum']);
-        $data['attributes']['email'] = $document['email'];
+        $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);
+        $data['receipt']['attributes']['email'] = $document['email'];
+        $data['receipt']['attributes']['phone'] = '';
 
         $items = array();
         $inventPositions = $document['inventPositions'];
         if (is_array($inventPositions) && count($inventPositions)) {
             foreach ($inventPositions AS $position) {
-                $items[] = array('price' => $position['price'], 'name' => $position['name'], 'quantity' => $position['quantity'], 'sum' => $position['price'] * $position['quantity']);
+                $tax = MonetaSdkKassa::ATOL_NONE;
+                switch ($position['vatTag']) {
+                    case MonetaSdkKassa::VAT0:
+                        $tax = MonetaSdkKassa::ATOL_VAT0;
+                        break;
+                    case MonetaSdkKassa::VAT18:
+                        $tax = MonetaSdkKassa::ATOL_VAT18;
+                        break;
+                    case MonetaSdkKassa::VATWR10:
+                        $tax = MonetaSdkKassa::ATOL_VAT110;
+                        break;
+                    case MonetaSdkKassa::VATWR18:
+                        $tax = MonetaSdkKassa::ATOL_VAT118;
+                        break;
+                }
+
+                $items[] = array(
+                    'price' => $position['price'], 'name' => $position['name'], 'quantity' => $position['quantity'],
+                    'sum' => $position['price'] * $position['quantity'], 'tax' => $tax
+                );
             }
         }
 
-        $data['items'] = $items;
+        $data['receipt']['items'] = $items;
 
         $totalAmount = 0;
         $payments = array();
@@ -84,8 +111,13 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
             }
         }
 
-        $data['payments'] = $payments;
-        $data['total'] = $totalAmount;
+        $data['receipt']['payments'] = $payments;
+        $data['receipt']['total'] = $totalAmount;
+
+        $data['service']['inn'] = $this->kassaInn;
+        $data['service']['payment_address'] = $this->kassaAddress;
+
+        // print_r($data);
 
         $result = $this->sendHttpRequest($url, $method, $data, $tokenid);
         return json_decode($result, true);

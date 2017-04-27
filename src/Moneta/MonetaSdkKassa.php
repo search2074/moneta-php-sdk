@@ -13,7 +13,7 @@ interface MonetaSdkKassa
     const VATWR10  = 1107;  // НДС с рассч. ставкой 10%
     const VATWR18  = 1106;  // НДС с рассч. ставкой 18%
 
-    const ATOL_NONE   = 'None';
+    const ATOL_NONE   = 'none';
     const ATOL_VAT0   = 'vat0';
     const ATOL_VAT10  = 'vat10';
     const ATOL_VAT18  = 'vat18';
