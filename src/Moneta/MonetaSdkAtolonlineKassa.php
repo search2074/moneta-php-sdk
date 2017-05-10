@@ -117,9 +117,8 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $data['service']['inn'] = $this->kassaInn;
         $data['service']['payment_address'] = $this->kassaAddress;
 
-        // print_r($data);
-
         $result = $this->sendHttpRequest($url, $method, $data, $tokenid);
+
         return json_decode($result, true);
     }
 
@@ -158,7 +157,12 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $res = curl_exec($ch);
         if ($res === false) {
             if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-                MonetaSdkUtils::addToLog("sendHttpRequest atolonline Response:\n" . var_export(curl_error($ch), true) . "\n");
+                MonetaSdkUtils::addToLog("sendHttpRequest atolonline Response error:\n" . var_export(curl_error($ch), true) . "\n");
+            }
+        }
+        else {
+            if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
+                MonetaSdkUtils::addToLog("sendHttpRequest atolonline Response:\n" . $result . "\n");
             }
         }
 
