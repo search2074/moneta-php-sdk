@@ -117,9 +117,19 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $data['service']['inn'] = $this->kassaInn;
         $data['service']['payment_address'] = $this->kassaAddress;
 
-        $result = $this->sendHttpRequest($url, $method, $data, $tokenid);
+        $respond = $this->sendHttpRequest($url, $method, $data, $tokenid);
 
-        return json_decode($result, true);
+        $result = false;
+        // пример ответа
+        // {"uuid":"ea5991ab-05f3-4c10-980a-3b3f3d58ed13","timestamp":"18.05.2017 16:33:23","status":"wait","error":null}
+        if ($respond) {
+            $respond = json_decode($respond, true);
+            if (isset($respond['error']) && empty($respond['error'])) {
+                $result = true;
+            }
+        }
+
+        return $result;
     }
 
     public function checkDocumentStatus()
