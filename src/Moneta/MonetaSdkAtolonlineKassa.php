@@ -115,6 +115,11 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $data['receipt']['total'] = $totalAmount;
 
         $data['service']['inn'] = $this->kassaInn;
+
+        if (isset($document['responseURL']) && $document['responseURL']) {
+            $data['service']['callback_url'] = $document['responseURL'];
+        }
+
         $data['service']['payment_address'] = $this->kassaAddress;
 
         $respond = $this->sendHttpRequest($url, $method, $data, $tokenid);
