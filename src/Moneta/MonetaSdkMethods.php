@@ -1035,7 +1035,7 @@ class MonetaSdkMethods
         if (!$this->kassaService) {
             $isKassaEnabled = $this->getSettingValue('monetasdk_kassa_enabled');
             $kassaType = $this->getSettingValue('monetasdk_kassa_type');
-            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline'))) {
+            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway'))) {
                 $storageSettings = array(
                     'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'), 'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
                     'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'), 'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
@@ -1044,7 +1044,7 @@ class MonetaSdkMethods
                     'monetasdk_kassa_atol_api_url' => $this->getSettingValue('monetasdk_kassa_atol_api_url'), 'monetasdk_kassa_atol_api_version' => $this->getSettingValue('monetasdk_kassa_atol_api_version'),
                     'monetasdk_kassa_atol_login' => $this->getSettingValue('monetasdk_kassa_atol_login'), 'monetasdk_kassa_atol_password' => $this->getSettingValue('monetasdk_kassa_atol_password'),
                     'monetasdk_kassa_atol_group_code' => $this->getSettingValue('monetasdk_kassa_atol_group_code'), 'monetasdk_kassa_inn' => $this->getSettingValue('monetasdk_kassa_inn'),
-                    'monetasdk_kassa_address' => $this->getSettingValue('monetasdk_kassa_address'),
+                    'monetasdk_kassa_address' => $this->getSettingValue('monetasdk_kassa_address'), 'monetasdk_account_id' => $this->getSettingValue('monetasdk_account_id'),
 
                 );
 
