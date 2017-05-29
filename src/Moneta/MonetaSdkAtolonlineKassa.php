@@ -128,9 +128,13 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         // пример ответа
         // {"uuid":"ea5991ab-05f3-4c10-980a-3b3f3d58ed13","timestamp":"18.05.2017 16:33:23","status":"wait","error":null}
         if ($respond) {
-            $respond = json_decode($respond, true);
-            if (isset($respond['error']) && empty($respond['error'])) {
-                $result = true;
+            $respondArray = @json_decode($respond, true);
+            if (is_array($respondArray) && count($respondArray)) {
+                foreach ($respondArray AS $respondItemKey => $respondItemValue) {
+                    if ($respondItemKey == 'error' && (!$respondItemValue || $respondItemValue == 'null')) {
+                        $result = true;
+                    }
+                }
             }
         }
 
