@@ -48,6 +48,12 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
 
     public function checkKassaStatus()
     {
+        $credentials = $this->authoriseKassa();
+
+        $response = static::sendHttpRequest('/v1/status', 'GET', $credentials);
+
+        return $response;
+
 
     }
 
