@@ -88,9 +88,6 @@ class MonetaSdkPayanywayKassa implements MonetaSdkKassa
             MonetaSdkUtils::addToLog("sendHttpRequest payanyway Respond:\n" . $result . "\n");
         }
 
-        echo $result;
-
-
         curl_close($ch);
 
         return $result;
