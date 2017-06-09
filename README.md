@@ -2,9 +2,7 @@
 
 This lib provides methods to accept payments via PayAnyWay (Moneta.ru).
 
-New update includes support of online kassa 54-FZ.
-
-Please add a new file kassa_settings.ini under config folder.
+New update includes support of online kassa 54-FZ. Please add a new file kassa_settings.ini under config folder.
 
 kassa_settings.ini content is:
 
