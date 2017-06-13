@@ -66,7 +66,9 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $method = $this->groupCode . "/sell";
 
         // данные чека
-        $document = @json_decode($document, true);
+        if (!is_array($document)) {
+            $document = json_decode($document, true);
+        }
 
         $d = new \DateTime($document['checkoutDateTime']);
         $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);

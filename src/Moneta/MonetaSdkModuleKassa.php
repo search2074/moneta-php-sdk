@@ -60,6 +60,13 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
     public function sendDocument($document)
     {
         $credentials = $this->authoriseKassa();
+        if (!$credentials) {
+            return false;
+        }
+
+        if (!is_array($document)) {
+            $document = json_decode($document, true);
+        }
 
         if (isset($document['id'])) {
             $document['id'] = 'module-' . $document['id'];

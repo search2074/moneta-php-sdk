@@ -63,7 +63,12 @@ class MonetaSdkPayanywayKassa implements MonetaSdkKassa
     private function sendHttpRequest($url, $method, $data)
     {
         // запрос надо сделать через curl
-        $jsonData = json_encode(json_decode($data, true));
+        if (is_array($data)) {
+            $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }
+        else {
+            $jsonData = $data;
+        }
 
         $operationUrl = $url . "?method=" . $method . "&accountid=" . $this->kassaAccountId;
 
