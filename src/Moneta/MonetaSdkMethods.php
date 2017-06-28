@@ -859,6 +859,9 @@ class MonetaSdkMethods
             if (isset($additionalData['AUTHORIZEONLY'])) {
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('AUTHORIZEONLY', $additionalData['AUTHORIZEONLY']));
             }
+            if (isset($additionalData['SOURCETARIFFMULTIPLIER'])) {
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('SOURCETARIFFMULTIPLIER', $additionalData['SOURCETARIFFMULTIPLIER']));
+            }
             if (isset($additionalData['Version'])) {
                 $invoiceRequest->version = $additionalData['Version'];
             }
