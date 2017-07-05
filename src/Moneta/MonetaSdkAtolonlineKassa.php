@@ -66,9 +66,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $method = $this->groupCode . "/sell";
 
         // данные чека
-        if (!is_array($document)) {
-            $document = json_decode($document, true);
-        }
+        $document = @json_decode($document, true);
 
         $d = new \DateTime($document['checkoutDateTime']);
         $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);
@@ -96,8 +94,8 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
                 }
 
                 $items[] = array(
-                    'price' => $position['price'], 'name' => $position['name'], 'quantity' => $position['quantity'],
-                    'sum' => $position['price'] * $position['quantity'], 'tax' => $tax
+                    'price' => floatval($position['price']), 'name' => $position['name'], 'quantity' => intval($position['quantity']),
+                    'sum' => floatval($position['price'] * $position['quantity']), 'tax' => $tax
                 );
             }
         }
@@ -108,7 +106,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $payments = array();
         if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
             foreach ($document['moneyPositions'] AS $moneyPosition) {
-                $payments[] = array('type' => 0, 'sum' => $moneyPosition['sum']);
+                $payments[] = array('type' => 1, 'sum' => floatval($moneyPosition['sum']));
                 $totalAmount = $totalAmount + $moneyPosition['sum'];
             }
         }
