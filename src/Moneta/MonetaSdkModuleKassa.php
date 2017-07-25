@@ -48,25 +48,12 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
 
     public function checkKassaStatus()
     {
-        $credentials = $this->authoriseKassa();
-
-        $response = static::sendHttpRequest('/v1/status', 'GET', $credentials);
-
-        return $response;
-
 
     }
 
     public function sendDocument($document)
     {
         $credentials = $this->authoriseKassa();
-        if (!$credentials) {
-            return false;
-        }
-
-        if (!is_array($document)) {
-            $document = json_decode($document, true);
-        }
 
         if (isset($document['id'])) {
             $document['id'] = 'module-' . $document['id'];
@@ -76,18 +63,8 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
         }
 
         $response = static::sendHttpRequest('/v1/doc', 'POST', $credentials, $document);
-        if ($response === false) {
-            if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-                MonetaSdkUtils::addToLog("sendHttpRequest Error:\n" . var_export(error_get_last(), true) . "\n");
-            }
-        }
-        else {
-            if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
-                MonetaSdkUtils::addToLog("sendHttpRequest Response: \n" . print_r($response, true));
-            }
-        }
 
-        $result = false;
+        $result = $response;
         if (isset($response['status']) && in_array($response['status'], array('QUEUED', 'PENDING', 'PRINTED', 'COMPLETED'))) {
             $result = true;
         }

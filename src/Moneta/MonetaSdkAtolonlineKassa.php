@@ -124,7 +124,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
 
         $respond = $this->sendHttpRequest($url, $method, $data, $tokenid);
 
-        $result = false;
+        $result = $respond;
         // пример ответа
         // {"uuid":"ea5991ab-05f3-4c10-980a-3b3f3d58ed13","timestamp":"18.05.2017 16:33:23","status":"wait","error":null}
         if ($respond) {

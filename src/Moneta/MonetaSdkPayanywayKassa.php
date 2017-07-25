@@ -41,7 +41,7 @@ class MonetaSdkPayanywayKassa implements MonetaSdkKassa
 
         $respond = $this->sendHttpRequest($url, $method, $data);
 
-        $result = false;
+        $result = $respond;
         // пример ответа
         // {"data":true,"isSuccess":true,"info":null}
 
@@ -63,12 +63,7 @@ class MonetaSdkPayanywayKassa implements MonetaSdkKassa
     private function sendHttpRequest($url, $method, $data)
     {
         // запрос надо сделать через curl
-        if (is_array($data)) {
-            $jsonData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        }
-        else {
-            $jsonData = $data;
-        }
+        $jsonData = json_encode($data);
 
         $operationUrl = $url . "?method=" . $method . "&accountid=" . $this->kassaAccountId;
 
