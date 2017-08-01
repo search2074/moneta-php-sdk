@@ -62,6 +62,28 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
             $document['docNum'] = 'module-' . $document['docNum'];
         }
 
+        if (isset($document['inventPositions'])) {
+            $newInventory = array();
+            $inventPositions = $document['inventPositions'];
+            if (is_array($inventPositions) && count($inventPositions)) {
+                foreach ($inventPositions AS $position) {
+                    if (isset($position['name'])) {
+                        // productName подвергнуть преобразованию ESCAPED_UNICODE
+                        $strName = (string)$position['name'];
+                        $strName = preg_replace_callback('/u([0-9a-fA-F]{4})/', function ($match) {
+                            return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+                        }, $strName);
+                        $strName = str_replace('\\', '', $strName);
+                        $position['name'] = $strName;
+                    }
+
+                    $newInventory[] = $position;
+                }
+            }
+
+            $document['inventPositions'] = $newInventory;
+        }
+
         $response = static::sendHttpRequest('/v1/doc', 'POST', $credentials, $document);
 
         $result = $response;
