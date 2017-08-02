@@ -1035,7 +1035,7 @@ class MonetaSdkMethods
         if (!$this->kassaService) {
             $isKassaEnabled = $this->getSettingValue('monetasdk_kassa_enabled');
             $kassaType = $this->getSettingValue('monetasdk_kassa_type');
-            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys'))) {
+            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway'))) {
                 $storageSettings = array(
                     'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'), 'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
                     'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'), 'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
