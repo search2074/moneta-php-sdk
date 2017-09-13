@@ -1035,24 +1035,43 @@ class MonetaSdkMethods
         if (!$this->kassaService) {
             $isKassaEnabled = $this->getSettingValue('monetasdk_kassa_enabled');
             $kassaType = $this->getSettingValue('monetasdk_kassa_type');
-            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway'))) {
+            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys', 'buhsoft'))) {
                 $storageSettings = array(
-                    'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'), 'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
-                    'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'), 'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
-                    'monetasdk_kassa_module_api_url' => $this->getSettingValue('monetasdk_kassa_module_api_url'), 'monetasdk_kassa_module_uuid' => $this->getSettingValue('monetasdk_kassa_module_uuid'),
-                    'monetasdk_kassa_module_login' => $this->getSettingValue('monetasdk_kassa_module_login'), 'monetasdk_kassa_module_password' => $this->getSettingValue('monetasdk_kassa_module_password'),
-                    'monetasdk_kassa_atol_api_url' => $this->getSettingValue('monetasdk_kassa_atol_api_url'), 'monetasdk_kassa_atol_api_version' => $this->getSettingValue('monetasdk_kassa_atol_api_version'),
-                    'monetasdk_kassa_atol_login' => $this->getSettingValue('monetasdk_kassa_atol_login'), 'monetasdk_kassa_atol_password' => $this->getSettingValue('monetasdk_kassa_atol_password'),
-                    'monetasdk_kassa_atol_group_code' => $this->getSettingValue('monetasdk_kassa_atol_group_code'), 'monetasdk_kassa_inn' => $this->getSettingValue('monetasdk_kassa_inn'),
-                    'monetasdk_kassa_address' => $this->getSettingValue('monetasdk_kassa_address'), 'monetasdk_account_id' => $this->getSettingValue('monetasdk_account_id'),
+                    'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'),
+                    'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
 
+                    'monetasdk_account_id' => $this->getSettingValue('monetasdk_account_id'),
+
+                    'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'),
+                    'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
+                    'monetasdk_kassa_inn' => $this->getSettingValue('monetasdk_kassa_inn'),
+                    'monetasdk_kassa_address' => $this->getSettingValue('monetasdk_kassa_address'),
+
+                    'monetasdk_kassa_module_api_url' => $this->getSettingValue('monetasdk_kassa_module_api_url'),
+                    'monetasdk_kassa_module_uuid' => $this->getSettingValue('monetasdk_kassa_module_uuid'),
+                    'monetasdk_kassa_module_login' => $this->getSettingValue('monetasdk_kassa_module_login'),
+                    'monetasdk_kassa_module_password' => $this->getSettingValue('monetasdk_kassa_module_password'),
+
+                    'monetasdk_kassa_atol_api_url' => $this->getSettingValue('monetasdk_kassa_atol_api_url'),
+                    'monetasdk_kassa_atol_api_version' => $this->getSettingValue('monetasdk_kassa_atol_api_version'),
+                    'monetasdk_kassa_atol_login' => $this->getSettingValue('monetasdk_kassa_atol_login'),
+                    'monetasdk_kassa_atol_password' => $this->getSettingValue('monetasdk_kassa_atol_password'),
+                    'monetasdk_kassa_atol_group_code' => $this->getSettingValue('monetasdk_kassa_atol_group_code'),
+
+                    'monetasdk_kassa_starrys_api_url' => $this->getSettingValue('monetasdk_kassa_starrys_api_url'),
+                    'monetasdk_kassa_starrys_api_version' => $this->getSettingValue('monetasdk_kassa_starrys_api_version'),
+                    'monetasdk_kassa_starrys_client_id' => $this->getSettingValue('monetasdk_kassa_starrys_client_id'),
+                    'monetasdk_kassa_starrys_cert_name' => $this->getSettingValue('monetasdk_kassa_starrys_cert_name'),
+                    'monetasdk_kassa_starrys_tax_mode' => $this->getSettingValue('monetasdk_kassa_starrys_tax_mode'),
+
+                    'monetasdk_kassa_buhsoft_api_url' => $this->getSettingValue('monetasdk_kassa_buhsoft_api_url'),
+                    'monetasdk_kassa_buhsoft_token' => $this->getSettingValue('monetasdk_kassa_buhsoft_token'),
                 );
 
                 $kassaServiceName = "\\Moneta\\MonetaSdk" . ucfirst($kassaType) . "Kassa";
                 $kassaServiceObject = new $kassaServiceName($storageSettings);
                 $this->kassaService = $kassaServiceObject;
-            }
-            else {
+            } else {
                 $this->kassaService = new \Moneta\MonetaSdkEmptyKassa();
             }
         }

@@ -28,7 +28,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $this->kassaApiUrl = $this->kassaStorageSettings['monetasdk_kassa_atol_api_url'];
         $this->kassaApiVersion = $this->kassaStorageSettings['monetasdk_kassa_atol_api_version'];
         $this->associatedLogin = $this->kassaStorageSettings['monetasdk_kassa_atol_login'];
-        $this->associatedPassword = $this->kassaStorageSettings['monetasdk_kassa_atol_password'];
+        $this->associatedPassword = str_replace('&amp;', '&', $this->kassaStorageSettings['monetasdk_kassa_atol_password']);
         $this->groupCode = $this->kassaStorageSettings['monetasdk_kassa_atol_group_code'];
         $this->kassaInn = $this->kassaStorageSettings['monetasdk_kassa_inn'];
         $this->kassaAddress = $this->kassaStorageSettings['monetasdk_kassa_address'];
@@ -94,14 +94,10 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
                 }
 
                 // productName подвергнуть преобразованию ESCAPED_UNICODE
-                $strName = (string)$position['name'];
-                $strName = preg_replace_callback('/u([0-9a-fA-F]{4})/', function ($match) {
-                    return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
-                }, $strName);
-                $strName = str_replace('\\', '', $strName);
+                $position['name'] = MonetaSdkUtils::convertEscapedUnicode($position['name']);
 
                 $items[] = array(
-                    'price' => floatval($position['price']), 'name' => (string)$strName, 'quantity' => intval($position['quantity']),
+                    'price' => floatval($position['price']), 'name' => (string)$position['name'], 'quantity' => intval($position['quantity']),
                     'sum' => floatval($position['price'] * $position['quantity']), 'tax' => $tax
                 );
             }
@@ -179,9 +175,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         );
 
         $result = curl_exec($ch);
-
-        $res = curl_exec($ch);
-        if ($res === false) {
+        if ($result === false) {
             if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
                 MonetaSdkUtils::addToLog("sendHttpRequest atolonline Response error:\n" . var_export(curl_error($ch), true) . "\n");
             }

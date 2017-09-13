@@ -30,7 +30,7 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
     {
         $response = static::sendHttpRequest('/v1/associate/' . $this->kassaStorageSettings['monetasdk_kassa_module_uuid'],
             'POST', array('username' => $this->kassaStorageSettings['monetasdk_kassa_module_login'],
-            'password' => $this->kassaStorageSettings['monetasdk_kassa_module_password']));
+            'password' => str_replace('&amp;', '&', $this->kassaStorageSettings['monetasdk_kassa_module_password'])));
 
         if ($response !== false) {
             $this->associatedLogin = $response['userName'];

@@ -14,6 +14,7 @@ class MonetaSdkUtils
 	const VIEW_FILES_PATH 				= "/../../view/";
     const EVENTS_FILES_PATH 			= "/../../events/";
 	const LOGS_FILES_PATH 				= "/../../logs/";
+    const CERT_FILES_PATH 				= "/../../files/certs/";
 
     /**
      * ini Files
@@ -34,6 +35,7 @@ class MonetaSdkUtils
 	const EXCEPTION_NO_INI_FILE 		= ".ini file not found: ";
 	const EXCEPTION_NO_VIEW_FILE 		= "view file not found: ";
 	const EXCEPTION_NO_VALUE_IN_ARRAY 	= "no vallue in array: ";
+    const EXCEPTION_NO_CERT_FILE 		= ".pem cert file not found: ";
 
     /**
      * Date format
@@ -316,4 +318,16 @@ class MonetaSdkUtils
         return $result;
     }
 
+    /**
+     * @param $string
+     * @return string
+     */
+    public static function convertEscapedUnicode($string = '')
+    {
+        $strName = (string)$string;
+        $strName = preg_replace_callback('/u([0-9a-fA-F]{4})/', function ($match) {
+            return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+        }, $strName);
+        return $strName = str_replace('\\', '', $strName);
+    }
 }

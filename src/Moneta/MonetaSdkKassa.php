@@ -20,6 +20,18 @@ interface MonetaSdkKassa
     const ATOL_VAT110 = 'vat110';
     const ATOL_VAT118 = 'vat118';
 
+    const STARRYS_NONE   = 4;
+    const STARRYS_VAT0   = 3;
+    const STARRYS_VAT10  = 2;
+    const STARRYS_VAT18  = 1;
+    const STARRYS_VAT110 = 6;
+    const STARRYS_VAT118 = 5;
+
+    const BUHSOFT_NONE   = 4;
+    const BUHSOFT_VAT0   = 3;
+    const BUHSOFT_VAT10  = 2;
+    const BUHSOFT_VAT18  = 1;
+
     public function authoriseKassa();
 
     public function checkKassaStatus();
