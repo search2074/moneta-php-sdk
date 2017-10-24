@@ -57,44 +57,90 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
 
     public function sendDocument($document)
     {
+        $document = @json_decode($document, true);
         $tokenid = $this->authoriseKassa();
         if (!$tokenid) {
             return false;
         }
 
         $url = $this->kassaApiUrl . "/" . $this->kassaApiVersion . "/";
-        $method = $this->groupCode . "/sell";
 
+        switch ($document['docType']) {
+            case MonetaSdkKassa::OPERATION_TYPE_SALE:
+                $method = MonetaSdkKassa::ATOL_METHOD_SALE;
+                break;
+            case MonetaSdkKassa::OPERATION_TYPE_SALE_RETURN:
+                $method = MonetaSdkKassa::ATOL_METHOD_SALE_RETURN;
+                break;
+            default:
+                $method = false;
+        }
+        if (!$method)
+        {
+            MonetaSdkUtils::addToLog("sendDocument atolonline: not defined type operation. Data: ".print_r($document, true));
+            return false;
+        }
+
+        $method = $this->groupCode . '/' . $method;
         // данные чека
-        $document = @json_decode($document, true);
 
         $d = new \DateTime($document['checkoutDateTime']);
         $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);
         $data['receipt']['attributes']['email'] = $document['email'];
         $data['receipt']['attributes']['phone'] = '';
 
+        // телефон или e-mail?
+        $clientPhone = (isset($document['phone'])) ? $document['phone'] : null;
+        $clientEmail = $document['email'];
+        if (!$clientPhone && $clientEmail && strpos($clientEmail, '@') === false) {
+            $clientPhone = $clientEmail;
+        }
+        if ($clientPhone) {
+            // формат нужен +7-ххх-ххх-хххх
+            $pattern = "/[^0-9]/i";
+            $clientPhone = preg_replace($pattern, "", $clientPhone);
+            // код страны - 7: Россия
+            if (preg_match("/^[78]9/i", $clientPhone)) {
+                $clientPhone = preg_replace("/^8/i", "7", $clientPhone);  // если первая цифра номера «8», то заменим ее на «7»
+            }
+            if (preg_match("/^9/i", $clientPhone) && strlen($clientPhone) == 10) {
+                $clientPhone = "7" . $clientPhone;
+            }
+            $clientPhone = '+' . $clientPhone;
+        }
+        // установим в документ номер телефона вместо e-mail
+        if ($clientPhone) {
+            $data['receipt']['attributes']['phone'] = $clientPhone;
+            $data['receipt']['attributes']['email'] = '';
+        }
+
         $items = array();
         $inventPositions = $document['inventPositions'];
         if (is_array($inventPositions) && count($inventPositions)) {
             foreach ($inventPositions AS $position) {
                 $tax = MonetaSdkKassa::ATOL_NONE;
-                switch ($position['vatTag']) {
-                    case MonetaSdkKassa::VAT0:
-                        $tax = MonetaSdkKassa::ATOL_VAT0;
-                        break;
-                    case MonetaSdkKassa::VAT18:
-                        $tax = MonetaSdkKassa::ATOL_VAT18;
-                        break;
-                    case MonetaSdkKassa::VATWR10:
-                        $tax = MonetaSdkKassa::ATOL_VAT110;
-                        break;
-                    case MonetaSdkKassa::VATWR18:
-                        $tax = MonetaSdkKassa::ATOL_VAT118;
-                        break;
+                if (isset($position['vatTag'])) {
+                    switch ($position['vatTag']) {
+                        case MonetaSdkKassa::VAT0:
+                            $tax = MonetaSdkKassa::ATOL_VAT0;
+                            break;
+                        case MonetaSdkKassa::VAT10:
+                            $tax = MonetaSdkKassa::ATOL_VAT10;
+                            break;
+                        case MonetaSdkKassa::VAT18:
+                            $tax = MonetaSdkKassa::ATOL_VAT18;
+                            break;
+                        case MonetaSdkKassa::VATWR10:
+                            $tax = MonetaSdkKassa::ATOL_VAT110;
+                            break;
+                        case MonetaSdkKassa::VATWR18:
+                            $tax = MonetaSdkKassa::ATOL_VAT118;
+                            break;
+                    }
                 }
 
                 // productName подвергнуть преобразованию ESCAPED_UNICODE
-                $position['name'] = MonetaSdkUtils::convertEscapedUnicode($position['name']);
+                $position['name'] = (isset($position['name']) && is_string($position['name'])) ? MonetaSdkUtils::convertEscapedUnicode($position['name']) : '';
 
                 $items[] = array(
                     'price' => floatval($position['price']), 'name' => (string)$position['name'], 'quantity' => intval($position['quantity']),

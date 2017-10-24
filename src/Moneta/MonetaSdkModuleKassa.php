@@ -53,6 +53,7 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
 
     public function sendDocument($document)
     {
+        $document = @json_decode($document, true);
         $credentials = $this->authoriseKassa();
 
         if (isset($document['id'])) {
@@ -60,6 +61,16 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
         }
         if (isset($document['docNum'])) {
             $document['docNum'] = 'module-' . $document['docNum'];
+        }
+
+        switch ($document['docType']) {
+            case MonetaSdkKassa::OPERATION_TYPE_SALE:
+                $document['docType'] = MonetaSdkKassa::MODULE_DOC_TYPE_SALE;
+                break;
+            case MonetaSdkKassa::OPERATION_TYPE_SALE_RETURN:
+                $document['docType'] = MonetaSdkKassa::MODULE_DOC_TYPE_SALE_RETURN;
+                break;
+            default:
         }
 
         if (isset($document['inventPositions'])) {
@@ -84,6 +95,37 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
             $document['inventPositions'] = $newInventory;
         }
 
+        // телефон или e-mail?
+        $clientPhone = (isset($document['phone'])) ? $document['phone'] : null;
+        $clientEmail = $document['email'];
+        if (!$clientPhone && $clientEmail && strpos($clientEmail, '@') === false) {
+            $clientPhone = $clientEmail;
+        }
+        if ($clientPhone) {
+            // формат нужен +7-ххх-ххх-хххх
+            $pattern = "/[^0-9]/i";
+            $clientPhone = preg_replace($pattern, "", $clientPhone);
+            // код страны - 7: Россия
+            if (preg_match("/^[78]9/i", $clientPhone)) {
+                $clientPhone = preg_replace("/^8/i", "7", $clientPhone);  // если первая цифра номера «8», то заменим ее на «7»
+            }
+            if (preg_match("/^9/i", $clientPhone) && strlen($clientPhone) == 10) {
+                $clientPhone = "7" . $clientPhone;
+            }
+            if (strlen($clientPhone) == 11) {
+                // да, это номер
+                $clientPhone = '+' . substr($clientPhone, 0, 1) . '-' . substr($clientPhone, 1, 3) . '-' . substr($clientPhone, 4, 3) . '-' . substr($clientPhone, 7, 4);
+            }
+            else {
+                $clientPhone = null;
+            }
+        }
+        // установим в документ номер телефона вместо e-mail
+        if ($clientPhone) {
+            $document['email'] = $clientPhone;
+        }
+
+        $document = json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $response = static::sendHttpRequest('/v1/doc', 'POST', $credentials, $document);
 
         $result = $response;

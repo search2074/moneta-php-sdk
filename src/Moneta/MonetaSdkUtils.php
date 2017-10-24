@@ -14,7 +14,8 @@ class MonetaSdkUtils
 	const VIEW_FILES_PATH 				= "/../../view/";
     const EVENTS_FILES_PATH 			= "/../../events/";
 	const LOGS_FILES_PATH 				= "/../../logs/";
-    const CERT_FILES_PATH 				= "/../../files/certs/";
+    const CERT_FILES_PATH 				= "/home/kassa/kassa.payanyway.ru/https/app/moneta-sdk-lib/files/certs/";
+    const LIBS_FILES_PATH 				= "/home/kassa/kassa.payanyway.ru/https/app/moneta-sdk-lib/libs/";
 
     /**
      * ini Files
@@ -100,11 +101,11 @@ class MonetaSdkUtils
      */
 	public static function getValueFromArray($value, $array)
 	{
-		if (!isset($array[$value])) {
-			throw new MonetaSdkException(self::EXCEPTION_NO_VALUE_IN_ARRAY . $value);
-		}
-
-		return $array[$value];
+	    $res = false;
+        if (isset($array[$value]) && $array[$value]) {
+            $res = $array[$value];
+        }
+		return $res;
 	}
 
     /**
@@ -116,7 +117,7 @@ class MonetaSdkUtils
 	public static function requireView($viewName, $data, $externalPath = null)
 	{
         $result = false;
-        if (!$externalPath && $externalPath != '') {
+        if ($externalPath && $externalPath != '') {
             $viewFileName = __DIR__ . $externalPath . $viewName . '.php';
         }
         else {

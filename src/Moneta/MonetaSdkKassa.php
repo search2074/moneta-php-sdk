@@ -32,6 +32,29 @@ interface MonetaSdkKassa
     const BUHSOFT_VAT10  = 2;
     const BUHSOFT_VAT18  = 1;
 
+    const IRETAIL_VAT0   = 0;
+    const IRETAIL_VAT10  = 0.1;
+    const IRETAIL_VAT18  = 0.18;
+
+
+    const OPERATION_TYPE_SALE           = 'SALE';
+    const OPERATION_TYPE_SALE_RETURN    = 'SALE_RETURN';
+
+    const ATOL_METHOD_SALE          = 'sell';
+    const ATOL_METHOD_SALE_RETURN   = 'sell_refund';
+
+    const MODULE_DOC_TYPE_SALE          = 'SALE';
+    const MODULE_DOC_TYPE_SALE_RETURN   = 'RETURN';
+
+    const STARRYS_DOC_TYPE_SALE          = 0;
+    const STARRYS_DOC_TYPE_SALE_RETURN   = 2;
+
+    const BUHSOFT_DOC_TYPE_SALE          = 0;
+    const BUHSOFT_DOC_TYPE_SALE_RETURN   = 1;
+
+    const IRETAIL_DOC_TYPE_SALE          = 'payment';
+    const IRETAIL_DOC_TYPE_SALE_RETURN   = 'refund';
+
     public function authoriseKassa();
 
     public function checkKassaStatus();

@@ -20,7 +20,7 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         $this->kassaApiVersion = $this->kassaStorageSettings['monetasdk_kassa_starrys_api_version'];
         $this->taxMode = $this->kassaStorageSettings['monetasdk_kassa_starrys_tax_mode'];
         $this->clientId = $this->kassaStorageSettings['monetasdk_kassa_starrys_client_id'];
-        $this->certPath = dirname(__FILE__) . MonetaSdkUtils::CERT_FILES_PATH . $this->kassaStorageSettings['monetasdk_kassa_starrys_cert_name'];
+        $this->certPath = MonetaSdkUtils::CERT_FILES_PATH . $this->kassaStorageSettings['account_id'].'.pem';
     }
 
     public function __destruct()
@@ -41,12 +41,25 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         $method = "Complex";
 
         // данные чека
+        $document = @json_decode($document, true);
+
         $data = [
             "Device" => "auto",
             "ClientId" => $this->clientId,
             "RequestId" => (string)$document['docNum'],
             //"Password"  => 1,
         ];
+
+        switch ($document['docType']) {
+            case MonetaSdkKassa::OPERATION_TYPE_SALE:
+                $data['DocumentType'] = MonetaSdkKassa::STARRYS_DOC_TYPE_SALE;
+                break;
+            case MonetaSdkKassa::OPERATION_TYPE_SALE_RETURN:
+                $data['DocumentType'] = MonetaSdkKassa::STARRYS_DOC_TYPE_SALE_RETURN;
+                break;
+            default:
+                $data['DocumentType'] = MonetaSdkKassa::STARRYS_DOC_TYPE_SALE;
+        }
 
         $items = [];
         $inventPositions = $document['inventPositions'];
@@ -78,8 +91,8 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
                 $position['name'] = preg_replace('/[^0-9a-zA-Zа-яА-ЯёЁ\+\(\) ]/ui', '', $position['name']);
 
                 $items[] = [
-                    "Qty" => intval($position['quantity']),
-                    "Price" => intval($position['price']),
+                    "Qty" => floatval($position['quantity']) * 1000,
+                    "Price" => floatval($position['price']) * 100,
                     "PayAttribute" => 4,
                     "TaxId" => $tax,
                     "Description" => $position['name']
@@ -87,9 +100,16 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
             }
         }
 
+        $totalAmount = 0;
+        if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
+            foreach ($document['moneyPositions'] AS $moneyPosition) {
+                $totalAmount = $totalAmount + ($moneyPosition['sum'] * 100);
+            }
+        }
+
         $data['Lines'] = $items;
         //$data['Cash'] = $document['moneyPositions']['sum'];
-        $data['NonCash'] = [$document['moneyPositions']['sum'], 0, 0];
+        $data['NonCash'] = [$totalAmount, 0, 0];
         $data['TaxMode'] = intval($this->taxMode);
         $data['PhoneOrEmail'] = $document['email'];
         //$data['Place'] = 'www.example.com';
@@ -100,6 +120,9 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         // {"ClientId":"52","Date":{"Date":{"Day":7,"Month":9,"Year":17},"Time":{"Hour":14,"Minute":15,"Second":21}},"Device":{"Name":"10000000000000000048","Address":"192.168.142.20:4048"},"DeviceRegistrationNumber":"2505480089058565","DeviceSerialNumber":"10000000000000000048","DocNumber":22,"DocumentType":0,"FNSerialNumber":"9999999999999048","FiscalDocNumber":26,"FiscalSign":1244333967,"GrandTotal":20000,"Path":"/fr/api/v2/Complex","QR":"t=20170907T1415\u0026s=200.00\u0026fn=9999999999999048\u0026i=26\u0026fp=1244333967\u0026n=1","RequestId":"235fwe6f23ET435152","Response":{"Error":0}}
 
         $result = false;
+
+        // return "url: ". $url . $method. ", respond: {$respond}";
+
         if ($respond) {
             $respondArray = @json_decode($respond, true);
             if (is_array($respondArray) && count($respondArray)) {

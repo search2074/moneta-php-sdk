@@ -32,19 +32,56 @@ class MonetaSdkBuhsoftKassa implements MonetaSdkKassa
     public function sendDocument($document)
     {
         $url = $this->kassaApiUrl;
-        $method = "docs/add/";
+        $method = "docs/add?cms=moneta.com";
 
         // данные чека
+        $document = @json_decode($document, true);
+
+        // телефон или e-mail?
+        $clientPhone = (isset($document['phone'])) ? $document['phone'] : null;
+        $clientEmail = $document['email'];
+        if (!$clientPhone && $clientEmail && strpos($clientEmail, '@') === false) {
+            $clientPhone = $clientEmail;
+        }
+        if ($clientPhone) {
+            // формат нужен +7-ххх-ххх-хххх
+            $pattern = "/[^0-9]/i";
+            $clientPhone = preg_replace($pattern, "", $clientPhone);
+            // код страны - 7: Россия
+            if (preg_match("/^[78]9/i", $clientPhone)) {
+                $clientPhone = preg_replace("/^8/i", "7", $clientPhone);  // если первая цифра номера «8», то заменим ее на «7»
+            }
+            if (preg_match("/^9/i", $clientPhone) && strlen($clientPhone) == 10) {
+                $clientPhone = "7" . $clientPhone;
+            }
+            $clientPhone = '+' . $clientPhone;
+        }
+        // установим в документ номер телефона вместо e-mail
+        if ($clientPhone) {
+            $document['phone'] = $clientPhone;
+            $document['email'] = '';
+        }
+        else {
+            $document['phone'] = '';
+        }
+
         $data = [
             'phone' => $document['phone'],
             'email' => $document['email'],
             'print' => 0,                   //0 - не печатать; 1 - печать чека
             'typeOperation' => 0,           //0 - продажа, 1 - возврат
-            'price[nal]' => floatval($document['moneyPositions']['nal']),
-            'price[bnal]' => floatval($document['moneyPositions']['bnal']),
             'name_cashier' => null,         // если хотите пропустить
             'token' => $this->token
         ];
+
+        switch ($document['docType']) {
+            case MonetaSdkKassa::OPERATION_TYPE_SALE:
+                $data['typeOperation'] = MonetaSdkKassa::BUHSOFT_DOC_TYPE_SALE;
+                break;
+            case MonetaSdkKassa::OPERATION_TYPE_SALE_RETURN:
+                $data['typeOperation'] = MonetaSdkKassa::BUHSOFT_DOC_TYPE_SALE_RETURN;
+                break;
+        }
 
         $items = [];
         $inventPositions = $document['inventPositions'];
@@ -75,6 +112,18 @@ class MonetaSdkBuhsoftKassa implements MonetaSdkKassa
             }
         }
         $data['data'] = $items;
+
+        $totalAmount = 0;
+        if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
+            foreach ($document['moneyPositions'] AS $moneyPosition) {
+                $totalAmount = $totalAmount + $moneyPosition['sum'];
+            }
+        }
+        $data['price[bnal]'] = floatval($totalAmount);
+
+        if (isset($document['responseURL']) && $document['responseURL']) {
+            $data['callback_url'] = $document['responseURL'];
+        }
 
         $respond = $this->sendHttpRequest($url, $method, $data);
         // пример ответа

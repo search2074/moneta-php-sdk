@@ -1035,12 +1035,12 @@ class MonetaSdkMethods
         if (!$this->kassaService) {
             $isKassaEnabled = $this->getSettingValue('monetasdk_kassa_enabled');
             $kassaType = $this->getSettingValue('monetasdk_kassa_type');
-            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys', 'buhsoft'))) {
+            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys', 'buhsoft', 'komtet', 'iretail'))) {
                 $storageSettings = array(
                     'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'),
                     'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
 
-                    'monetasdk_account_id' => $this->getSettingValue('monetasdk_account_id'),
+                    'account_id' => $this->getSettingValue('account_id'),
 
                     'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'),
                     'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
@@ -1061,11 +1061,18 @@ class MonetaSdkMethods
                     'monetasdk_kassa_starrys_api_url' => $this->getSettingValue('monetasdk_kassa_starrys_api_url'),
                     'monetasdk_kassa_starrys_api_version' => $this->getSettingValue('monetasdk_kassa_starrys_api_version'),
                     'monetasdk_kassa_starrys_client_id' => $this->getSettingValue('monetasdk_kassa_starrys_client_id'),
-                    'monetasdk_kassa_starrys_cert_name' => $this->getSettingValue('monetasdk_kassa_starrys_cert_name'),
                     'monetasdk_kassa_starrys_tax_mode' => $this->getSettingValue('monetasdk_kassa_starrys_tax_mode'),
 
                     'monetasdk_kassa_buhsoft_api_url' => $this->getSettingValue('monetasdk_kassa_buhsoft_api_url'),
                     'monetasdk_kassa_buhsoft_token' => $this->getSettingValue('monetasdk_kassa_buhsoft_token'),
+
+                    'monetasdk_kassa_komtet_shop_id' => $this->getSettingValue('monetasdk_kassa_komtet_shop_id'),
+                    'monetasdk_kassa_komtet_queue_id' => $this->getSettingValue('monetasdk_kassa_komtet_queue_id'),
+                    'monetasdk_kassa_komtet_secret' => $this->getSettingValue('monetasdk_kassa_komtet_secret'),
+
+                    'monetasdk_kassa_iretail_api_url' => $this->getSettingValue('monetasdk_kassa_iretail_api_url'),
+                    'monetasdk_kassa_iretail_api_key' => $this->getSettingValue('monetasdk_kassa_iretail_api_key'),
+                    'monetasdk_kassa_iretail_login' => $this->getSettingValue('monetasdk_kassa_iretail_login'),
                 );
 
                 $kassaServiceName = "\\Moneta\\MonetaSdk" . ucfirst($kassaType) . "Kassa";
