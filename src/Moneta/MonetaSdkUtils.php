@@ -14,8 +14,8 @@ class MonetaSdkUtils
 	const VIEW_FILES_PATH 				= "/../../view/";
     const EVENTS_FILES_PATH 			= "/../../events/";
 	const LOGS_FILES_PATH 				= "/../../logs/";
-    const CERT_FILES_PATH 				= "/home/kassa/kassa.payanyway.ru/https/app/moneta-sdk-lib/files/certs/";
-    const LIBS_FILES_PATH 				= "/home/kassa/kassa.payanyway.ru/https/app/moneta-sdk-lib/libs/";
+    const CERT_FILES_PATH 				= "/../../files/certs/";
+    const LIBS_FILES_PATH 				= "/../../libs/";
 
     /**
      * ini Files
