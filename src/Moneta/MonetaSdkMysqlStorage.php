@@ -19,13 +19,9 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
     {
         if (!$this->mysqlConnector) {
             $host = $storageSettings['monetasdk_storage_mysql_port'] ? $storageSettings['monetasdk_storage_mysql_host'] . ":" . $storageSettings['monetasdk_storage_mysql_port'] : $storageSettings['monetasdk_storage_mysql_host'];
-            $link = mysql_connect($host, $storageSettings['monetasdk_storage_mysql_username'], $storageSettings['monetasdk_storage_mysql_password']);
+            $link = mysqli_connect($host, $storageSettings['monetasdk_storage_mysql_username'], $storageSettings['monetasdk_storage_mysql_password'], $storageSettings['monetasdk_storage_mysql_database']);
             if (!$link) {
                 throw new MonetaSdkException(self::EXCEPTION_NO_MYSQL . 'MonetaSdkMysqlStorage');
-            }
-            $database = mysql_select_db($storageSettings['monetasdk_storage_mysql_database'], $link);
-            if (!$database) {
-                throw new MonetaSdkException(self::EXCEPTION_NO_DB . 'MonetaSdkMysqlStorage');
             }
 
             $this->mysqlConnector = $link;
@@ -38,7 +34,7 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
     public function __destruct()
     {
         if ($this->mysqlConnector) {
-            mysql_close($this->mysqlConnector);
+            mysqli_close($this->mysqlConnector);
         }
     }
 
@@ -57,7 +53,7 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
         $strFields = implode(',', $arrFields);
         $strValues = implode(',', $arrValues);
         $sql = "INSERT INTO `" . self::TABLE_NAME_INVOICE . "` ({$strFields}) VALUES ({$strValues})";
-        mysql_query($sql, $this->mysqlConnector);
+        mysqli_query($this->mysqlConnector, $sql);
     }
 
     /**
@@ -78,7 +74,7 @@ class MonetaSdkMysqlStorage implements MonetaSdkStorage
         $sql = "UPDATE `" . self::TABLE_NAME_INVOICE . "`  
 SET {$strPair}  
 WHERE invoiceId = '{$invoiceId}'";
-        mysql_query($sql, $this->mysqlConnector);
+        mysqli_query($this->mysqlConnector, $sql);
     }
 
     /**
@@ -90,9 +86,9 @@ WHERE invoiceId = '{$invoiceId}'";
         $result = false;
         $invoiceId = $this->prepareValue($invoiceId);
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE invoiceId = '{$invoiceId}'";
-        $retval = mysql_query($sql, $this->mysqlConnector);
+        $retval = mysqli_query($this->mysqlConnector, $sql);
         if ($retval) {
-            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+            while ($row = mysqli_fetch_assoc($retval)) {
                 if ($row) {
                     $result = $row;
                     break;
@@ -112,9 +108,9 @@ WHERE invoiceId = '{$invoiceId}'";
         $result = false;
         $tokenHash = $this->prepareValue($tokenHash);
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE tokenHash = '{$tokenHash}'";
-        $retval = mysql_query($sql, $this->mysqlConnector);
+        $retval = mysqli_query($this->mysqlConnector, $sql);
         if ($retval) {
-            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+            while ($row = mysqli_fetch_assoc($retval)) {
                 if ($row) {
                     $result = $row;
                     break;
@@ -134,9 +130,9 @@ WHERE invoiceId = '{$invoiceId}'";
         $result = false;
         $operationId = $this->prepareValue($operationId);
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE invoiceId = '{$operationId}'";
-        $retval = mysql_query($sql, $this->mysqlConnector);
+        $retval = mysqli_query($this->mysqlConnector, $sql);
         if ($retval) {
-            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+            while ($row = mysqli_fetch_assoc($retval)) {
                 if ($row) {
                     $result = $row;
                     break;
@@ -148,15 +144,38 @@ WHERE invoiceId = '{$invoiceId}'";
     }
 
     /**
+     * @param $orderId
+     * @return
+     */
+    public function getOperationIdByOrderId($orderId)
+    {
+        $result = null;
+        $orderId = $this->prepareValue($orderId);
+        $sql = "SELECT invoiceId FROM `" . self::TABLE_NAME_INVOICE . "` WHERE orderId = '{$orderId}'";
+        $retval = mysqli_query($this->mysqlConnector, $sql);
+        if ($retval) {
+            while ($row = mysqli_fetch_assoc($retval)) {
+                if ($row) {
+                    $result = $row['invoiceId'];
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+
+    /**
      * @return array
      */
     public function getInvoicesForNotifications()
     {
         $result = array();
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE invoiceStatus = '" . MonetaSdk::STATUS_FINISHED . "' AND dateNotify IS NOT NULL AND dateNotify <= NOW()";
-        $retval = mysql_query($sql, $this->mysqlConnector);
+        $retval = mysqli_query($this->mysqlConnector, $sql);
         if ($retval) {
-            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+            while ($row = mysqli_fetch_assoc($retval)) {
                 if ($row) {
                     $result[] = $row;
                 }
@@ -173,9 +192,9 @@ WHERE invoiceId = '{$invoiceId}'";
     {
         $result = array();
         $sql = "SELECT * FROM `" . self::TABLE_NAME_INVOICE . "` WHERE invoiceStatus = '" . MonetaSdk::STATUS_FINISHED . "' AND dateTarget IS NOT NULL AND dateTarget <= NOW()";
-        $retval = mysql_query($sql, $this->mysqlConnector);
+        $retval = mysqli_query($this->mysqlConnector, $sql);
         if ($retval) {
-            while ($row = mysql_fetch_array($retval, MYSQL_ASSOC)) {
+            while ($row = mysqli_fetch_assoc($retval)) {
                 if ($row) {
                     $result[] = $row;
                 }
@@ -205,7 +224,7 @@ WHERE invoiceId = '{$invoiceId}'";
      */
     private function checkInvoiceTableIsExists()
     {
-        if (mysql_num_rows(mysql_query("SHOW TABLES LIKE '" . self::TABLE_NAME_INVOICE . "'", $this->mysqlConnector)) > 0) {
+        if (mysqli_num_rows(mysqli_query($this->mysqlConnector, "SHOW TABLES LIKE '" . self::TABLE_NAME_INVOICE . "'")) > 0) {
             return true;
         }
         else {
@@ -239,7 +258,7 @@ WHERE invoiceId = '{$invoiceId}'";
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
         ";
 
-        mysql_query($sql, $this->mysqlConnector);
+        mysqli_query($this->mysqlConnector, $sql);
     }
 
     /**
@@ -264,7 +283,7 @@ WHERE invoiceId = '{$invoiceId}'";
      */
     private function prepareValue($value)
     {
-        return mysql_real_escape_string(trim(htmlspecialchars($value)));
+        return mysqli_real_escape_string($this->mysqlConnector, trim(htmlspecialchars($value)));
     }
 
 }

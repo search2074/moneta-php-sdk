@@ -24,4 +24,8 @@ class MonetaSdkEmptyStorage implements MonetaSdkStorage
 
     public function getOperation() {  }
 
+    public function getInvoiceByOperationId($operationId) {  }
+
+    public function getOperationIdByOrderId($orderId) {  }
+
 }

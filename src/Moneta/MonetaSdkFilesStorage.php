@@ -144,6 +144,26 @@ class MonetaSdkFilesStorage implements MonetaSdkStorage
     }
 
     /**
+     * @param $orderId
+     * @return
+     */
+    public function getOperationIdByOrderId($orderId)
+    {
+        $result = null;
+        $sourceArray = $this->getSourceArray();
+        if (is_array($sourceArray) && count($sourceArray)) {
+            foreach ($sourceArray AS $sourceItemKey => $sourceItem) {
+                if (isset($sourceItem['orderId']) && $orderId == $sourceItem['orderId']) {
+                    $result = $sourceItem['invoiceId'];
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return array
      */
     public function getInvoicesForNotifications()
