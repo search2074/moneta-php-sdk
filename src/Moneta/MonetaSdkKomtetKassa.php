@@ -2,11 +2,6 @@
 
 namespace Moneta;
 
-require_once MonetaSdkUtils::LIBS_FILES_PATH
-    . DIRECTORY_SEPARATOR . 'komtet-kassa-php-sdk'
-    . DIRECTORY_SEPARATOR . 'autoload.php';
-
-
 use Moneta;
 
 use Komtet\KassaSdk\Client;
@@ -47,6 +42,10 @@ class MonetaSdkKomtetKassa implements MonetaSdkKassa
         $this->kassaQueueId = $this->kassaStorageSettings['monetasdk_kassa_komtet_queue_id'];
         $this->kassaQueueName = $this->kassaStorageSettings['account_id'];
         $this->secret = $this->kassaStorageSettings['monetasdk_kassa_komtet_secret'];
+
+        require_once $this->kassaStorageSettings['libs_files_path']
+            . DIRECTORY_SEPARATOR . 'komtet-kassa-php-sdk'
+            . DIRECTORY_SEPARATOR . 'autoload.php';
     }
 
     public function __destruct()

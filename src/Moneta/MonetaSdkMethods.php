@@ -1024,6 +1024,8 @@ class MonetaSdkMethods
                     'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
 
                     'account_id' => $this->getSettingValue('account_id'),
+                    'cert_files_path' => APPLICATION_DIR . DIRECTORY_SEPARATOR . $this->getSettingValue('cert_files_path'),
+                    'libs_files_path' => APPLICATION_DIR . DIRECTORY_SEPARATOR . $this->getSettingValue('libs_files_path'),
 
                     'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'),
                     'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),

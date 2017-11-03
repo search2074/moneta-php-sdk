@@ -20,7 +20,7 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         $this->kassaApiVersion = $this->kassaStorageSettings['monetasdk_kassa_starrys_api_version'];
         $this->taxMode = $this->kassaStorageSettings['monetasdk_kassa_starrys_tax_mode'];
         $this->clientId = $this->kassaStorageSettings['monetasdk_kassa_starrys_client_id'];
-        $this->certPath = MonetaSdkUtils::CERT_FILES_PATH . $this->kassaStorageSettings['account_id'].'.pem';
+        $this->certPath = $this->kassaStorageSettings['cert_files_path'] . $this->kassaStorageSettings['account_id'] . '.pem';
     }
 
     public function __destruct()
