@@ -100,7 +100,7 @@ class MonetaSdkUtils
 	public static function getValueFromArray($value, $array)
 	{
 	    $res = false;
-        if (isset($array[$value]) && $array[$value]) {
+        if (isset($array[$value])) {
             $res = $array[$value];
         }
 		return $res;
