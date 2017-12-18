@@ -4,7 +4,7 @@ namespace Moneta;
 
 use Moneta;
 
-class MonetaSdkMethods
+class MonetaSdkMethods extends MonetaSdkMarketplace
 {
     const EXCEPTION_NO_CONNECTION_TYPE = 'no connection type is defined: ';
 
