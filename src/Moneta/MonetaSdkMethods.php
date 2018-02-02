@@ -4,7 +4,7 @@ namespace Moneta;
 
 use Moneta;
 
-class MonetaSdkMethods extends MonetaSdkMarketplace
+class MonetaSdkMethods
 {
     const EXCEPTION_NO_CONNECTION_TYPE = 'no connection type is defined: ';
 
@@ -1018,7 +1018,7 @@ class MonetaSdkMethods extends MonetaSdkMarketplace
         if (!$this->kassaService) {
             $isKassaEnabled = $this->getSettingValue('monetasdk_kassa_enabled');
             $kassaType = $this->getSettingValue('monetasdk_kassa_type');
-            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys', 'buhsoft', 'komtet', 'iretail'))) {
+            if ($isKassaEnabled && in_array($kassaType, array('module', 'atolonline', 'payanyway', 'starrys', 'buhsoft', 'komtet', 'iretail', 'orangedata'))) {
                 $storageSettings = array(
                     'monetasdk_demo_mode' => $this->getSettingValue('monetasdk_demo_mode'),
                     'monetasdk_debug_mode' => $this->getSettingValue('monetasdk_debug_mode'),
@@ -1036,6 +1036,7 @@ class MonetaSdkMethods extends MonetaSdkMarketplace
                     'monetasdk_kassa_module_uuid' => $this->getSettingValue('monetasdk_kassa_module_uuid'),
                     'monetasdk_kassa_module_login' => $this->getSettingValue('monetasdk_kassa_module_login'),
                     'monetasdk_kassa_module_password' => $this->getSettingValue('monetasdk_kassa_module_password'),
+                    'monetasdk_kassa_module_encoded_auth' => $this->getSettingValue('monetasdk_kassa_module_encoded_auth'),
 
                     'monetasdk_kassa_atol_api_url' => $this->getSettingValue('monetasdk_kassa_atol_api_url'),
                     'monetasdk_kassa_atol_api_version' => $this->getSettingValue('monetasdk_kassa_atol_api_version'),
@@ -1058,6 +1059,10 @@ class MonetaSdkMethods extends MonetaSdkMarketplace
                     'monetasdk_kassa_iretail_api_url' => $this->getSettingValue('monetasdk_kassa_iretail_api_url'),
                     'monetasdk_kassa_iretail_api_key' => $this->getSettingValue('monetasdk_kassa_iretail_api_key'),
                     'monetasdk_kassa_iretail_login' => $this->getSettingValue('monetasdk_kassa_iretail_login'),
+
+                    'monetasdk_kassa_orangedata_api_url' => $this->getSettingValue('monetasdk_kassa_orangedata_api_url'),
+                    'monetasdk_kassa_orangedata_tax_mode' => $this->getSettingValue('monetasdk_kassa_orangedata_tax_mode'),
+                    'monetasdk_kassa_orangedata_cert_pswd' => $this->getSettingValue('monetasdk_kassa_orangedata_cert_pswd'),
                 );
 
                 $kassaServiceName = "\\Moneta\\MonetaSdk" . ucfirst($kassaType) . "Kassa";

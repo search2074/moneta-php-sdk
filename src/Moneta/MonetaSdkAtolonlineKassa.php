@@ -81,9 +81,9 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
             return false;
         }
 
-        $method = $this->groupCode . '/' . $method;
-        // данные чека
+        $method = (!$this->groupCode) ? 'null/' . $method : $this->groupCode . '/' . $method;
 
+        // данные чека
         $d = new \DateTime($document['checkoutDateTime']);
         $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);
         $data['receipt']['attributes']['email'] = $document['email'];
@@ -187,6 +187,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
             }
         }
 
+        // return $result . " | " . $url . $method;
         return $result;
     }
 

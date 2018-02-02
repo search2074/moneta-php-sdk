@@ -20,7 +20,9 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         $this->kassaApiVersion = $this->kassaStorageSettings['monetasdk_kassa_starrys_api_version'];
         $this->taxMode = $this->kassaStorageSettings['monetasdk_kassa_starrys_tax_mode'];
         $this->clientId = $this->kassaStorageSettings['monetasdk_kassa_starrys_client_id'];
-        $this->certPath = $this->kassaStorageSettings['cert_files_path'] . $this->kassaStorageSettings['account_id'] . '.pem';
+        $this->certPath = $this->kassaStorageSettings['cert_files_path'] . DIRECTORY_SEPARATOR . 'starrys'
+                . DIRECTORY_SEPARATOR . $this->kassaStorageSettings['account_id']
+                . DIRECTORY_SEPARATOR . $this->kassaStorageSettings['account_id'] . '.pem';
     }
 
     public function __destruct()
@@ -91,8 +93,8 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
                 $position['name'] = preg_replace('/[^0-9a-zA-Zа-яА-ЯёЁ\+\(\) ]/ui', '', $position['name']);
 
                 $items[] = [
-                    "Qty" => floatval($position['quantity']) * 1000,
-                    "Price" => floatval($position['price']) * 100,
+                    "Qty" => round(round(floatval($position['quantity']), 4) * 1000),
+                    "Price" => round(round(floatval($position['price']), 2) * 100),
                     "PayAttribute" => 4,
                     "TaxId" => $tax,
                     "Description" => $position['name']
@@ -103,7 +105,7 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
         $totalAmount = 0;
         if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
             foreach ($document['moneyPositions'] AS $moneyPosition) {
-                $totalAmount = $totalAmount + ($moneyPosition['sum'] * 100);
+                $totalAmount = $totalAmount + (round($moneyPosition['sum'], 2) * 100);
             }
         }
 
@@ -135,6 +137,10 @@ class MonetaSdkStarrysKassa implements MonetaSdkKassa
                     MonetaSdkUtils::addToLog("sendDocument starrys error in response:\n" . $respondArray . "\n");
                 }
             }
+        }
+
+        if (!$result) {
+            $result = $respond;
         }
 
         return $result;

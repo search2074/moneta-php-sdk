@@ -4,7 +4,6 @@ namespace Moneta;
 
 use Moneta;
 
-
 class MonetaSdk extends MonetaSdkMethods
 {
     const STATUS_NEW = 'STATUS_NEW';

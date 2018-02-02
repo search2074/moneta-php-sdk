@@ -36,6 +36,20 @@ interface MonetaSdkKassa
     const IRETAIL_VAT10  = 0.1;
     const IRETAIL_VAT18  = 0.18;
 
+    const ORANGEDATA_NONE   = 6;
+    const ORANGEDATA_VAT0   = 5;
+    const ORANGEDATA_VAT10  = 2;
+    const ORANGEDATA_VAT18  = 1;
+    const ORANGEDATA_VAT110 = 4;
+    const ORANGEDATA_VAT118 = 3;
+
+    const DREAMKASS_NDS_NO_TAX  = "NDS_NO_TAX";
+    const DREAMKASS_NDS_0       = "NDS_0";
+    const DREAMKASS_NDS_10      = "NDS_10";
+    const DREAMKASS_NDS_18      = "NDS_18";
+    const DREAMKASS_NDS_110     = "NDS_10_CALCULATED";
+    const DREAMKASS_NDS_118     = "NDS_18_CALCULATED";
+
 
     const OPERATION_TYPE_SALE           = 'SALE';
     const OPERATION_TYPE_SALE_RETURN    = 'SALE_RETURN';
@@ -54,6 +68,13 @@ interface MonetaSdkKassa
 
     const IRETAIL_DOC_TYPE_SALE          = 'payment';
     const IRETAIL_DOC_TYPE_SALE_RETURN   = 'refund';
+
+    const ORANGEDATA_DOC_TYPE_SALE          = 1;
+    const ORANGEDATA_DOC_TYPE_SALE_RETURN   = 2;
+
+    const DREAMKASS_DOC_TYPE_SALE          = 'SALE';
+    const DREAMKASS_DOC_TYPE_SALE_RETURN   = 'RETURN';
+
 
     public function authoriseKassa();
 

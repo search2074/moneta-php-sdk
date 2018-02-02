@@ -54,13 +54,19 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
     public function sendDocument($document)
     {
         $document = @json_decode($document, true);
-        $credentials = $this->authoriseKassa();
+
+        if (!$this->kassaStorageSettings['monetasdk_kassa_module_encoded_auth']) {
+            $credentials = $this->authoriseKassa();
+        }
+        else {
+            $credentials = array('auth' => $this->kassaStorageSettings['monetasdk_kassa_module_encoded_auth']);
+        }
 
         if (isset($document['id'])) {
-            $document['id'] = 'module-' . $document['id'];
+            $document['id'] = 'module-' . urlencode($document['id']);
         }
         if (isset($document['docNum'])) {
-            $document['docNum'] = 'module-' . $document['docNum'];
+            $document['docNum'] = 'module-' . urlencode($document['docNum']);
         }
 
         switch ($document['docType']) {
@@ -130,7 +136,12 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
 
         $result = $response;
         if (isset($response['status']) && in_array($response['status'], array('QUEUED', 'PENDING', 'PRINTED', 'COMPLETED'))) {
-            $result = true;
+            $result['pawresult'] = true;
+        }
+        else {
+            if (isset($result['pawauth'])) {
+                $result['pawauth'] = 'remove!';
+            }
         }
 
         return $result;
@@ -143,7 +154,9 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
     }
 
     private function sendHttpRequest($url, $method, $auth_data, $data = '') {
-        $encoded_auth =  base64_encode($auth_data['username'] . ':' . $auth_data['password']);
+
+        $encoded_auth = (isset($auth_data['auth'])) ? $auth_data['auth'] : base64_encode($auth_data['username'] . ':' . $auth_data['password']);
+
         if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
             MonetaSdkUtils::addToLog("sendHttpRequest input data:\n" . $url . ', ' . $method . ', ' . $encoded_auth . "\n");
         }
@@ -190,7 +203,10 @@ class MonetaSdkModuleKassa implements MonetaSdkKassa
             MonetaSdkUtils::addToLog("sendHttpRequest module Response:\n" . var_export($response, true) . "\n");
         }
 
-        return json_decode($response, true);
+        $result = json_decode($response, true);
+        $result['pawauth'] = $encoded_auth;
+
+        return $result;
     }
 
 
