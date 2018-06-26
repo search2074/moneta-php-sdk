@@ -416,7 +416,7 @@ class MonetaSdk extends MonetaSdkMethods
                     $clientTransaction = $invoiceVal['invoiceId'] . "-R" . $newRecursion;
 
                     // make payment
-                    $paymentResult = $this->sdkMonetaPayment($invoiceVal['payee'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
+                    $paymentResult = $this->sdkMonetaPayment($invoiceVal['payer'], $this->getSettingValue('monetasdk_account_id'), $invoiceVal['amount'],
                         $clientTransaction, array('PAYMENTTOKEN' => $invoiceVal['paymentToken']), "Monthly autopayment from invoice: {$invoiceVal['invoiceId']}");
 
                     if ($this->getSettingValue('monetasdk_debug_mode')) {
