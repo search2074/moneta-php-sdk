@@ -219,7 +219,12 @@ class MonetaSdkMethods
                 foreach ($attributes AS $key => $value) {
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $attributesInParameters = $attributes;
+                unset($attributesInParameters['PAYEECARDNUMBER']);
+                unset($attributesInParameters['CARDNUMBER']);
+                unset($attributesInParameters['CARDEXPIRATION']);
+                unset($attributesInParameters['CARDCVV2']);
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributesInParameters)));
                 $payment->operationInfo = $operationInfo;
             }
             if ($clientTransaction) {
@@ -523,6 +528,7 @@ class MonetaSdkMethods
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
+                unset($attributesInParameters['CARDCVV2']);
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributesInParameters)));
                 $monetaTransfer->operationInfo = $operationInfo;
             }
@@ -582,6 +588,7 @@ class MonetaSdkMethods
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
+                unset($attributesInParameters['CARDCVV2']);
                 $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributesInParameters)));
                 $monetaTransaction->operationInfo = $operationInfo;
             }
@@ -637,7 +644,12 @@ class MonetaSdkMethods
                 foreach ($attributes AS $key => $value) {
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
-                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributes)));
+                $attributesInParameters = $attributes;
+                unset($attributesInParameters['PAYEECARDNUMBER']);
+                unset($attributesInParameters['CARDNUMBER']);
+                unset($attributesInParameters['CARDEXPIRATION']);
+                unset($attributesInParameters['CARDCVV2']);
+                $operationInfo->addAttribute($this->pvtMonetaCreateAttribute('customurlparameters', http_build_query($attributesInParameters)));
                 $monetaTransaction->operationInfo = $operationInfo;
             }
             if ($clientTransaction) {
