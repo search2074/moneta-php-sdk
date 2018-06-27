@@ -220,6 +220,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $attributesInParameters = $attributes;
+                unset($attributesInParameters['SECURETOKEN']);
+                unset($attributesInParameters['PAYMENTTOKEN']);
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
@@ -525,6 +527,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $attributesInParameters = $attributes;
+                unset($attributesInParameters['SECURETOKEN']);
+                unset($attributesInParameters['PAYMENTTOKEN']);
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
@@ -585,6 +589,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $attributesInParameters = $attributes;
+                unset($attributesInParameters['SECURETOKEN']);
+                unset($attributesInParameters['PAYMENTTOKEN']);
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
@@ -645,6 +651,8 @@ class MonetaSdkMethods
                     $operationInfo->addAttribute($this->pvtMonetaCreateAttribute($key, $value));
                 }
                 $attributesInParameters = $attributes;
+                unset($attributesInParameters['SECURETOKEN']);
+                unset($attributesInParameters['PAYMENTTOKEN']);
                 unset($attributesInParameters['PAYEECARDNUMBER']);
                 unset($attributesInParameters['CARDNUMBER']);
                 unset($attributesInParameters['CARDEXPIRATION']);
