@@ -1055,6 +1055,8 @@ class MonetaSdkMethods
                     'cert_files_path' => realpath(dirname(__FILE__)) . "/" . $this->getSettingValue('cert_files_path'),
                     'libs_files_path' => realpath(dirname(__FILE__)) . "/" . $this->getSettingValue('libs_files_path'),
 
+                    'monetasdk_account_id' => $this->getSettingValue('monetasdk_account_id'),
+
                     'monetasdk_kassa_enabled' => $this->getSettingValue('monetasdk_kassa_enabled'),
                     'monetasdk_kassa_type' => $this->getSettingValue('monetasdk_kassa_type'),
                     'monetasdk_kassa_inn' => $this->getSettingValue('monetasdk_kassa_inn'),
