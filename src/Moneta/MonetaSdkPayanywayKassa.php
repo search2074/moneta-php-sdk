@@ -37,7 +37,7 @@ class MonetaSdkPayanywayKassa implements MonetaSdkKassa
     {
         $url = self::PAW_KASSA_URL;
         $method = "sale";
-        $data = $document;
+        $data = @json_decode($document, true);
 
         $respond = $this->sendHttpRequest($url, $method, $data);
 
