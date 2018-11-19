@@ -123,7 +123,12 @@ class MonetaSdk extends MonetaSdkMethods
         $signature = null;
         $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
         if ($monetaAccountCode && $monetaAccountCode != '') {
-            $signature = md5( $this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $monetaAccountCode );
+            if (isset($additionalData['MNT_SUBSCRIBER_ID'])) {
+                $signature = md5($this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $additionalData['MNT_SUBSCRIBER_ID'] . $this->getSettingValue('monetasdk_test_mode') . $monetaAccountCode);
+            }
+            else {
+                $signature = md5($this->getSettingValue('monetasdk_account_id') . $orderId . $amount . $currency . $this->getSettingValue('monetasdk_test_mode') . $monetaAccountCode);
+            }
         }
         $additionalFields = $this->getAdditionalFieldsByPaymentSystem($paymentSystem);
         if ($isRegular) {
