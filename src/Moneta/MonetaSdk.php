@@ -607,7 +607,7 @@ class MonetaSdk extends MonetaSdkMethods
         $signature = null;
         $monetaAccountCode = $this->getSettingValue('monetasdk_account_code');
         if ($monetaAccountCode && $monetaAccountCode != '') {
-            $signature = md5( $this->getRequestedValue('MNT_ID') . $this->getRequestedValue('MNT_TRANSACTION_ID') . $this->getRequestedValue('MNT_OPERATION_ID') . $this->getRequestedValue('MNT_AMOUNT') . $this->getRequestedValue('MNT_CURRENCY_CODE') . $this->getRequestedValue('MNT_TEST_MODE') . $monetaAccountCode );
+            $signature = md5( $this->getRequestedValue('MNT_ID') . $this->getRequestedValue('MNT_TRANSACTION_ID') . $this->getRequestedValue('MNT_OPERATION_ID') . $this->getRequestedValue('MNT_AMOUNT') . $this->getRequestedValue('MNT_CURRENCY_CODE') . $this->getRequestedValue('MNT_SUBSCRIBER_ID') . $this->getRequestedValue('MNT_TEST_MODE') . $monetaAccountCode );
         }
         if (!$signature || $signature == $this->getRequestedValue('MNT_SIGNATURE')) {
             $processResultData['orderId'] = $this->getRequestedValue('MNT_TRANSACTION_ID');
