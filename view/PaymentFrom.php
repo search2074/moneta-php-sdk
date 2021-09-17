@@ -44,7 +44,7 @@
     <input type="hidden" name="MNT_FORM_METHOD" value="<?= $data['method']; ?>">
 
     <?php
-        if (count($data['postData']) && is_array($data['postData'])) {
+        if (is_array($data['postData']) && count($data['postData'])) {
             foreach ($data['postData'] AS $varData) {
                 if ($varData['value']) {
                     $hideAdditionalField = 'type="hidden"';
@@ -57,14 +57,14 @@
     ?>
 
     <?php
-    if (count($data['forwardFields']) && is_array($data['forwardFields'])) {
+    if (is_array($data['forwardFields']) && count($data['forwardFields'])) {
         foreach ($data['forwardFields'] AS $key => $val) {
             ?>
             <input type="hidden" name="<?= $key; ?>" value="<?= $val; ?>">
             <?php
         }
     }
-    if (count($data['additionalData']) && is_array($data['additionalData'])) {
+    if (is_array($data['additionalData']) && count($data['additionalData'])) {
         foreach ($data['additionalData'] AS $key => $value) {
             ?>
             <input type="hidden" name="<?= $key; ?>" value="<?= $value; ?>">

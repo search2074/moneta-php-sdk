@@ -167,7 +167,7 @@ class MonetaSdkIretailKassa implements MonetaSdkKassa
             }
             if (is_array($respondArray)
                 && count($respondArray)
-                && (true == $respondArray['status'])
+                && ($respondArray['status'] === true)
                 && (isset($respondArray['result']['order_number'])))
             {
                 $result = true;

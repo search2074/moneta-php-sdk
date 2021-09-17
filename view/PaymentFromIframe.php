@@ -30,7 +30,7 @@
     }
 
 
-    if (count($data['postData']) && is_array($data['postData'])) {
+    if (is_array($data['postData']) && count($data['postData'])) {
         foreach ($data['postData'] AS $varData) {
             $widgetLink .= "&" . $varData['var'] . "=" . $varData['value'];
         }

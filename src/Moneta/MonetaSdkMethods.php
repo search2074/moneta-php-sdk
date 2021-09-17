@@ -768,7 +768,7 @@ class MonetaSdkMethods
             if (!$this->error && is_array($getOperationResult) && isset($getOperationResult['operation']) && is_array($getOperationResult['operation'])) {
                 // если у операции есть paymenttoken -> сохраним его в найденный счёт в колонку paymentToken
                 $getOperationResultAttributes = $getOperationResult['operation']['attribute'];
-                if (count($getOperationResultAttributes) && is_array($getOperationResultAttributes)) {
+                if (is_array($getOperationResultAttributes) && count($getOperationResultAttributes)) {
                     foreach ($getOperationResultAttributes AS $oneAttribute) {
                         if (is_array($oneAttribute) && isset($oneAttribute['key']) && $oneAttribute['key'] == 'paymenttoken') {
                             $getOperationToken = $oneAttribute['value'];
