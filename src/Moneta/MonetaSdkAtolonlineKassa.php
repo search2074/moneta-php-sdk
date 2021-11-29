@@ -32,13 +32,14 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         $this->groupCode = $this->kassaStorageSettings['monetasdk_kassa_atol_group_code'];
         $this->kassaInn = $this->kassaStorageSettings['monetasdk_kassa_inn'];
         $this->kassaAddress = $this->kassaStorageSettings['monetasdk_kassa_address'];
-
+        $this->snoSystem = $this->kassaStorageSettings['monetasdk_kassa_sno_system'];
+        $this->companyEmail = $this->kassaStorageSettings['monetasdk_kassa_company_email'];
+        $this->vatType = $this->kassaStorageSettings['monetasdk_kassa_vat_type'];
+        $this->paymentMethod = $this->kassaStorageSettings['monetasdk_kassa_payment_method'];
+        $this->paymentObject = $this->kassaStorageSettings['monetasdk_kassa_payment_object'];
     }
 
-    public function __destruct()
-    {
-
-    }
+    public function __destruct(){}
 
     public function authoriseKassa()
     {
@@ -50,14 +51,15 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         return (isset($result['token'])) ? $result['token'] : false;
     }
 
-    public function checkKassaStatus()
-    {
-
-    }
+    public function checkKassaStatus(){}
 
     public function sendDocument($document)
     {
         $document = @json_decode($document, true);
+        if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
+            MonetaSdkUtils::addToLog("sendDocument atolonline: Document aata: " .
+                print_r($document, true).PHP_EOL);
+        }
         $tokenid = $this->authoriseKassa();
         if (!$tokenid) {
             return false;
@@ -85,11 +87,150 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
 
         // данные чека
         $d = new \DateTime($document['checkoutDateTime']);
-        $data = array('timestamp' => $d->format('d.m.Y H:i:s'), 'external_id' => 'atol-' . $document['docNum']);
-        $data['receipt']['attributes']['email'] = $document['email'];
-        $data['receipt']['attributes']['phone'] = '';
 
-        // телефон или e-mail?
+        // пример json запроса:
+        /*
+        {
+            "timestamp":"29.05.2017 09:00:01",
+            "external_id":"atol-1122334455",
+            "receipt":{
+                "client":{
+                    "email":"test@mail.ru",
+                    "phone":"+71111111111"
+                },
+                "company":{
+                    "inn":"123123123",
+                    "payment_address":"http://test.ru",
+                    "sno":"osn",
+                    "email":"support@test.ru"
+                },
+                "items":[{
+                    "name":"Товар 1",
+                    "price":10,
+                    "quantity":1,
+                    "sum":10,
+                    "vat":{
+                        "type":"vat20"
+                    },
+                    "payment_method":"full_payment",
+                    "payment_object":"payment"
+                }],
+                "payments":[{
+                    "type":1,
+                    "sum":10
+                }],
+                "total":10
+            }
+        }
+        */
+
+        $data = [
+            'timestamp' => $d->format('d.m.Y H:i:s'),
+            'external_id' => 'atol-' . $document['docNum']
+        ];
+        $data['receipt']['client']['email'] = $document['email'];
+        if($phone = $this->getClientPhone($document)) {
+            $data['receipt']['client']['phone'] = $phone;
+        }
+        $data['receipt']['company'] = [
+            'inn' => $this->kassaInn,
+            'payment_address' => $this->kassaAddress,
+            'sno' => $this->snoSystem,
+            'email' => $this->companyEmail,
+        ];
+
+        $items = [];
+        $inventPositions = $document['inventPositions'];
+        if (is_array($inventPositions) && !empty($inventPositions)) {
+            foreach ($inventPositions AS $position) {
+                // productName подвергнуть преобразованию ESCAPED_UNICODE
+                $position['name'] = (isset($position['name']) && is_string($position['name'])) ?
+                    MonetaSdkUtils::convertEscapedUnicode($position['name']) : '';
+
+                $items[] = [
+                    'name' => (string)$position['name'],
+                    'price' => floatval($position['price']),
+                    'quantity' => intval($position['quantity']),
+                    'sum' => floatval($position['price'] * $position['quantity']),
+                    'vat' => [
+                        'type' => $this->vatType,
+                    ],
+                    'payment_method' => $this->paymentMethod,
+                    'payment_object' => $this->paymentObject,
+                ];
+            }
+        }
+
+        $data['receipt']['items'] = $items;
+
+        $totalAmount = 0;
+        $payments = [];
+        if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
+            foreach ($document['moneyPositions'] AS $moneyPosition) {
+                $payments[] = [
+                    'type' => 1,
+                    'sum' => floatval($moneyPosition['sum']),
+                ];
+                $totalAmount = $totalAmount + $moneyPosition['sum'];
+            }
+        }
+
+        $data['receipt']['payments'] = $payments;
+        $data['receipt']['total'] = $totalAmount;
+
+        //$data['service']['inn'] = $this->kassaInn;
+
+//        if (isset($document['responseURL']) && $document['responseURL']) {
+//            $data['service']['callback_url'] = $document['responseURL'];
+//        }
+
+//        $data['service']['payment_address'] = $this->kassaAddress;
+
+        $respond = $this->sendHttpRequest($url, $method, $data, $tokenid);
+
+        $result = $respond;
+        // пример успешного ответа:
+        /*
+            {
+                "uuid":"9afafa6a-0a00-444d-1a45-12345a12f2ff",
+                "status":"wait",
+                "error":null,
+                "timestamp":"29.11.2021 10:00:01"
+            }
+        */
+        // пример ответа с ошибкой
+        /*
+            {
+                "uuid":"9afafa6a-0a00-444d-1a45-12345a12f2ff",
+                "status":"wait",
+                "error":{
+                    "code":33,
+                    "error_id":"dba2abc1-01a1-3ab5-ba11-12adc132b15f",
+                    "text":"В системе существует чек с external_id : \"atol-1122334455\" и group_code: \"mac-test-ru_1122\"",
+                    "type":"system"
+                },
+                "timestamp":"29.11.2021 10:00:01"
+            }
+        */
+        if ($respond) {
+            $respondArray = @json_decode($respond, true);
+            if (is_array($respondArray) && count($respondArray)) {
+                foreach ($respondArray AS $respondItemKey => $respondItemValue) {
+                    if ($respondItemKey == 'error' && (!$respondItemValue || $respondItemValue == 'null')) {
+                        $result = true;
+                    }
+                }
+            }
+        }
+
+        // return $result . " | " . $url . $method;
+        return $result;
+    }
+
+    public function checkDocumentStatus(){}
+
+    private function getClientPhone($document)
+    {
         $clientPhone = (isset($document['phone'])) ? $document['phone'] : null;
         $clientEmail = $document['email'];
         if (!$clientPhone && $clientEmail && strpos($clientEmail, '@') === false) {
@@ -107,98 +248,13 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
                 $clientPhone = "7" . $clientPhone;
             }
             $clientPhone = '+' . $clientPhone;
+            return $clientPhone;
         }
-        // установим в документ номер телефона вместо e-mail
-        if ($clientPhone) {
-            $data['receipt']['attributes']['phone'] = $clientPhone;
-            $data['receipt']['attributes']['email'] = '';
-        }
-
-        $items = array();
-        $inventPositions = $document['inventPositions'];
-        if (is_array($inventPositions) && count($inventPositions)) {
-            foreach ($inventPositions AS $position) {
-                $tax = MonetaSdkKassa::ATOL_NONE;
-                if (isset($position['vatTag'])) {
-                    switch ($position['vatTag']) {
-                        case MonetaSdkKassa::VAT0:
-                            $tax = MonetaSdkKassa::ATOL_VAT0;
-                            break;
-                        case MonetaSdkKassa::VAT10:
-                            $tax = MonetaSdkKassa::ATOL_VAT10;
-                            break;
-                        case MonetaSdkKassa::VAT18:
-                            $tax = MonetaSdkKassa::ATOL_VAT18;
-                            break;
-                        case MonetaSdkKassa::VATWR10:
-                            $tax = MonetaSdkKassa::ATOL_VAT110;
-                            break;
-                        case MonetaSdkKassa::VATWR18:
-                            $tax = MonetaSdkKassa::ATOL_VAT118;
-                            break;
-                    }
-                }
-
-                // productName подвергнуть преобразованию ESCAPED_UNICODE
-                $position['name'] = (isset($position['name']) && is_string($position['name'])) ? MonetaSdkUtils::convertEscapedUnicode($position['name']) : '';
-
-                $items[] = array(
-                    'price' => floatval($position['price']), 'name' => (string)$position['name'], 'quantity' => intval($position['quantity']),
-                    'sum' => floatval($position['price'] * $position['quantity']), 'tax' => $tax
-                );
-            }
-        }
-
-        $data['receipt']['items'] = $items;
-
-        $totalAmount = 0;
-        $payments = array();
-        if (is_array($document['moneyPositions']) && count($document['moneyPositions'])) {
-            foreach ($document['moneyPositions'] AS $moneyPosition) {
-                $payments[] = array('type' => 1, 'sum' => floatval($moneyPosition['sum']));
-                $totalAmount = $totalAmount + $moneyPosition['sum'];
-            }
-        }
-
-        $data['receipt']['payments'] = $payments;
-        $data['receipt']['total'] = $totalAmount;
-
-        $data['service']['inn'] = $this->kassaInn;
-
-        if (isset($document['responseURL']) && $document['responseURL']) {
-            $data['service']['callback_url'] = $document['responseURL'];
-        }
-
-        $data['service']['payment_address'] = $this->kassaAddress;
-
-        $respond = $this->sendHttpRequest($url, $method, $data, $tokenid);
-
-        $result = $respond;
-        // пример ответа
-        // {"uuid":"ea5991ab-05f3-4c10-980a-3b3f3d58ed13","timestamp":"18.05.2017 16:33:23","status":"wait","error":null}
-        if ($respond) {
-            $respondArray = @json_decode($respond, true);
-            if (is_array($respondArray) && count($respondArray)) {
-                foreach ($respondArray AS $respondItemKey => $respondItemValue) {
-                    if ($respondItemKey == 'error' && (!$respondItemValue || $respondItemValue == 'null')) {
-                        $result = true;
-                    }
-                }
-            }
-        }
-
-        // return $result . " | " . $url . $method;
-        return $result;
-    }
-
-    public function checkDocumentStatus()
-    {
-
+        return null;
     }
 
     private function sendHttpRequest($url, $method, $data, $tokenid = null)
     {
-        // запрос надо сделать через curl
         $jsonData = json_encode($data);
 
         if ($this->kassaStorageSettings['monetasdk_debug_mode']) {
@@ -206,8 +262,13 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         }
 
         $operationUrl = $url . $method;
+        $headers = [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($jsonData),
+        ];
         if ($tokenid) {
             $operationUrl .= "?tokenid=" . $tokenid;
+            $headers[] = "Token: {$tokenid}";
         }
 
         $ch = curl_init();
@@ -216,10 +277,7 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($jsonData))
-        );
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $result = curl_exec($ch);
         if ($result === false) {
@@ -235,8 +293,5 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
 
         curl_close($ch);
         return $result;
-
     }
-
-
 }

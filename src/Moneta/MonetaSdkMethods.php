@@ -1093,8 +1093,16 @@ class MonetaSdkMethods
                     'monetasdk_kassa_orangedata_api_url' => $this->getSettingValue('monetasdk_kassa_orangedata_api_url'),
                     'monetasdk_kassa_orangedata_tax_mode' => $this->getSettingValue('monetasdk_kassa_orangedata_tax_mode'),
                     'monetasdk_kassa_orangedata_cert_pswd' => $this->getSettingValue('monetasdk_kassa_orangedata_cert_pswd'),
+
+                    'monetasdk_kassa_sno_system' => $this->getSettingValue('monetasdk_kassa_sno_system'),
+                    'monetasdk_kassa_company_email' => $this->getSettingValue('monetasdk_kassa_company_email'),
+                    'monetasdk_kassa_vat_type' => $this->getSettingValue('monetasdk_kassa_vat_type'),
+
+                    'monetasdk_kassa_payment_method' => $this->getSettingValue('monetasdk_kassa_payment_method'),
+                    'monetasdk_kassa_payment_object' => $this->getSettingValue('monetasdk_kassa_payment_object'),
                 );
 
+                // создание объекта кассы
                 $kassaServiceName = "\\Moneta\\MonetaSdk" . ucfirst($kassaType) . "Kassa";
                 $kassaServiceObject = new $kassaServiceName($storageSettings);
                 $this->kassaService = $kassaServiceObject;
