@@ -129,8 +129,8 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
             'external_id' => 'atol-' . $document['docNum']
         ];
         $data['receipt']['client']['email'] = $document['email'];
-        if($phone = $this->getClientPhone($document)) {
-            $data['receipt']['client']['phone'] = $phone;
+        if(!empty($document['phone'])) {
+            $data['receipt']['client']['phone'] = $document['phone'];
         }
         $data['receipt']['company'] = [
             'inn' => $this->kassaInn,
@@ -228,30 +228,6 @@ class MonetaSdkAtolonlineKassa implements MonetaSdkKassa
     }
 
     public function checkDocumentStatus(){}
-
-    private function getClientPhone($document)
-    {
-        $clientPhone = (isset($document['phone'])) ? $document['phone'] : null;
-        $clientEmail = $document['email'];
-        if (!$clientPhone && $clientEmail && strpos($clientEmail, '@') === false) {
-            $clientPhone = $clientEmail;
-        }
-        if ($clientPhone) {
-            // формат нужен +7-ххх-ххх-хххх
-            $pattern = "/[^0-9]/i";
-            $clientPhone = preg_replace($pattern, "", $clientPhone);
-            // код страны - 7: Россия
-            if (preg_match("/^[78]9/i", $clientPhone)) {
-                $clientPhone = preg_replace("/^8/i", "7", $clientPhone);  // если первая цифра номера «8», то заменим ее на «7»
-            }
-            if (preg_match("/^9/i", $clientPhone) && strlen($clientPhone) == 10) {
-                $clientPhone = "7" . $clientPhone;
-            }
-            $clientPhone = '+' . $clientPhone;
-            return $clientPhone;
-        }
-        return null;
-    }
 
     private function sendHttpRequest($url, $method, $data, $tokenid = null)
     {
